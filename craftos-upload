@@ -1,0 +1,47 @@
+#!/bin/bash
+
+usage() {
+	cat >&2 << EOF
+Usage: $0 FILE [ID]
+
+MANDATORY ARGUMENTS:
+
+FILE	Specify the file to upload. If the file ends in .hxml, it is read to
+		find the first '-lua' target, and this file is then uploaded.
+
+OPTIONAL ARGUMENTS:
+
+ID 		The id of the computer to which FILE is uploaded. If absent, computer 0
+		is used.
+
+ENVIRONMENT VARIABLES:
+
+CRAFTOS_PATH
+		Specifies the root of the craftos-pc installation. If undefined, taken
+		to be ~/.local/share/craftos-pc
+EOF
+}
+
+if [[ $# -lt 1 ]]; then
+	usage
+	exit 1
+fi
+
+src=$1
+craftos_pc_id=${2:-0}
+
+case "$src" in
+	*.hxml)
+		artifact=$(grep -E -- '^-?-lua' "$src" | head -n1 | cut -d' ' -f2)
+		if [[ "$artifact" == "" ]]; then
+			usage
+			exit 1
+		fi
+		dir=$(dirname "$src")
+		src=$dir/$artifact
+		;;
+esac
+
+craftos_path=${CRAFTOS_PATH:-~/.local/share/craftos-pc}
+
+echo install -Dm644 $src $craftos_path/computer/$craftos_pc_id/
