@@ -1,0 +1,7 @@
+# -cp src
+--main HelloWorldHx
+-D lua-ver=5.3
+-D lua-vanilla
+--lua hello-world.lua
+-L cctweaked
+--dce full
