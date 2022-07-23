@@ -1,7 +1,7 @@
-# -cp src
---main Main.hx
+-cp src
+--main Main
 -D lua-ver=5.3
 -D lua-vanilla
---lua t4.lua
+--lua t4
 -L cctweaked
 --dce full
