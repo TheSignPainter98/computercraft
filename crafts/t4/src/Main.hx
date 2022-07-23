@@ -7,15 +7,11 @@ import lua.Table;
 
 class Main {
 	public static function main() {
-		// var t:TestInit = {a: 'Hello', b: 2};
-		// trace(t);
-		// var t2:TestStruct = {a: 'World', b: 3};
-		// trace(t2);
+		haxe.macro.Compiler.includeFile("prepend.lua");
 
-		var t:Table<Int, String> = untyped __lua__("{...}");
+		// TODO Create an extern definition for _G.arg
+		var t:Table<Int, String> = untyped __lua__("_G.arg");
 		var args:Array<String> = Table.toArray(t);
-
-		// var b:Signal = {bordering: v, id: 0, state: ON};
 
 		switch args[0] {
 			case Machine.Display:
