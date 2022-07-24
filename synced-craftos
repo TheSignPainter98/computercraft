@@ -63,15 +63,20 @@ do_upload() {
 
 	initial="Last upload: $(date) "
 	date_hash_width=$(($(tput cols) - ${#initial}))
-	date_hash=$(date | md5sum)
-	echo -en "$initial${date_hash::$date_hash_width}"
+	date_hash=$(date | md5sum | cut -d' ' -f1)
+	echo -en "$initial${date_hash::$date_hash_width}\r"
 }
 
 md5sum_deps() {
 	md5sum $(find $(dirname $1) -name '*.hx' | sort)
 }
 
+for to_remove in "$artifact_basename" startup.lua; do
+	rm -f $craftos_path/computer/$craftos_pc_id/$to_remove
+done
+
 craftos &
+trap "kill -- $!" INT TERM ERR ILL
 
 cd $dir
 
