@@ -9,9 +9,7 @@ class Main {
 	public static function main() {
 		haxe.macro.Compiler.includeFile("prepend.lua");
 
-		// TODO Create an extern definition for _G.arg
-		var t:Table<Int, String> = untyped __lua__("_G.arg");
-		var args:Array<String> = Table.toArray(t);
+		var args:Array<String> = Sys.args();
 
 		switch args[0] {
 			case Machine.Display:
