@@ -3,7 +3,7 @@ package signal;
 import cc.OS;
 
 class Signal {
-	public static function main() {
+	public static function main(args: Array<String>) {
 		trace("I am a signal.");
 
 		while (true) {
