@@ -1,4 +1,6 @@
 import lua.Lua;
+import lua.NativeStringTools;
+import haxe.Exception;
 using StringTools;
 
 inline final prog_name = "t4";
@@ -45,11 +47,23 @@ final LICENSE_DEST = "@:LiCeNsE_dEsT";
 	public var metavar: Null<String> = null;
 	public var desc: Null<String> = null;
 	public var howMany: ArgCount = Exactly(1);
+	public var dflt: Null<Arg> = null;
 
-	public function name(): String {
+	public inline function name(): String {
 		if (metavar != null)
 			return metavar;
 		return dest;
+	}
+
+	public inline function getDefault(): Null<Arg> {
+		if (dflt != null)
+			return dflt;
+		return switch (howMany) {
+			case Exactly(1):
+				String("");
+			default:
+				List([]);
+		}
 	}
 }
 
@@ -60,9 +74,23 @@ final LICENSE_DEST = "@:LiCeNsE_dEsT";
 	public var short: String;
 	public var long: String;
 	public var action: OptionAction = StoreTrue;
+	public var dflt: Null<Arg> = null;
 
-	public function name() {
+	public inline function name() {
 		return short;
+	}
+
+	public inline function getDefault(): Null<Arg> {
+		if (dflt != null)
+			return dflt;
+		return switch (action) {
+			case StoreTrue:
+				Flag(false);
+			case StoreFalse:
+				Flag(true);
+			default:
+				null;
+		}
 	}
 }
 
@@ -77,7 +105,22 @@ enum OptionAction {
 	Store;
 }
 
-typedef Args = Map<String, Arg>;
+class NoSuchArgumentException extends Exception {}
+
+@:forward
+abstract Args(Map<String, Arg>) from Map<String, Arg> to Map<String, Arg> {
+	@:op([]) @:op(a.b) inline function get<T>(key: String): T {
+		var val = this.get(key);
+		if (val == null)
+			throw new NoSuchArgumentException('No such argument "$key"');
+		return cast Type.enumParameters(val)[0];
+	}
+
+	@:op([]) inline function set(key: String, val: Arg) {
+		this.set(key, val);
+		return val;
+	}
+}
 
 enum Arg {
 	Flag(val: Bool);
@@ -86,12 +129,10 @@ enum Arg {
 	List(vals: Array<String>);
 }
 
-enum Token {
-	TFlag(dest: String, val: Bool);
-	TOption(dest: String, val: String);
-	TList(dest: String, vals: Array<String>);
+@:structInit class Token {
+	public var dest: String;
+	public var arg: Arg;
 }
-
 
 enum ParserState {
 	Capture;
@@ -105,8 +146,8 @@ class CLI {
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
-		var options = [ spec.helpOption, spec.licenseOption ].concat(spec.options);
-		this.optionMap = [ for (o in options) for (trigger in [o.short, o.long]) trigger => o ];
+		spec.options = [ spec.helpOption, spec.licenseOption ].concat(spec.options);
+		this.optionMap = [ for (o in spec.options) for (trigger in [o.short, o.long]) trigger => o ];
 	}
 
 	public function parse(args: Array<String>): Null<Args> {
@@ -123,7 +164,7 @@ class CLI {
 
 		var parserState = Capture;
 		var positionalIterator = spec.positionals.iterator();
-		var toks = [];
+		var toks: Array<Token> = [];
 
 		var arg: String;
 		while ((arg = raw_args.shift()) != null) {
@@ -131,13 +172,20 @@ class CLI {
 				case Capture:
 					if (arg == "--") {
 						var positional: Null<PositionalArg> = null;
-						while (positionalIterator.hasNext()) {
+						while (positionalIterator.hasNext() && raw_args.length != 0) {
 							positional = positionalIterator.next();
-							if (switch (positional.howMany) {
-								case AtLeast(n): raw_args.length >= n;
-								case Exactly(n): raw_args.length == n;
-							}) {
-
+							switch (positional.howMany) {
+								case Exactly(1):
+									toks.push({
+										dest: positional.dest,
+										arg: String(raw_args[0]),
+									});
+								case AtLeast(n) | Exactly(n):
+									toks.push({
+										dest: positional.dest,
+										arg: List(raw_args.slice(0, n)),
+									});
+									raw_args = raw_args.slice(n);
 							}
 						}
 
@@ -146,31 +194,39 @@ class CLI {
 							return null;
 						}
 
-						// if (positional.howMany == One) {
-						//	if (raw_args.length != 1) {
-						//		showUsage('${positional.dest} takes exactly one argument, got ${raw_args.length}');
-						//		return null;
-						//	}
-						//	toks.push(Option(positional.dest, raw_args[0]));
-						//	return toks;
-						// }
+						if (positional.howMany.match(Exactly(1))) {
+							toks.push({
+								dest: positional.dest,
+								arg: String(raw_args[0]),
+							});
+						} else {
+							toks.push({
+								dest: positional.dest,
+								arg: List(raw_args),
+							});
+						}
 
-						toks.push(TList(positional.dest, raw_args));
 						return toks;
 					} else if (arg.charAt(0) == "-") { // TODO(kcza) kebab short flag usage
-						var optSpec = optionMap[arg];
-						if (optSpec != null)
-							switch (optSpec.action) {
-								case StoreTrue:
-									toks.push(TFlag(optSpec.dest, true));
-								case StoreFalse:
-									toks.push(TFlag(optSpec.dest, false));
-								case Store:
-									parserState = CaptureOption(arg, optSpec);
+						for (i in 1...arg.length) {
+							var dekebabedArg = "-" + arg.charAt(i);
+							var optSpec = optionMap[dekebabedArg];
+							if (optSpec != null)
+								switch (optSpec.action) {
+									case StoreTrue:
+										toks.push({dest: optSpec.dest, arg: Flag(true)});
+									case StoreFalse:
+										toks.push({dest: optSpec.dest, arg: Flag(false)});
+									case Store:
+										if (i < arg.length - 1)
+											raw_args.unshift(arg.substr(i + 1));
+										parserState = CaptureOption(dekebabedArg, optSpec);
+										break;
+								}
+							else {
+								showUsage('Unknown option: $dekebabedArg');
+								return null;
 							}
-						else {
-							showUsage('Unknown option: $arg');
-							return null;
 						}
 					} else {
 						if (!positionalIterator.hasNext()) {
@@ -180,10 +236,8 @@ class CLI {
 
 						var positional = positionalIterator.next();
 						switch (positional.howMany) {
-							case Exactly(n): // TODO: handle n
-								toks.push(TOption(positional.dest, arg));
-							case AtLeast(n): // TODO: handle n
-								toks.push(TList(positional.dest, [arg].concat(raw_args)));
+							case Exactly(1):
+								toks.push({dest: positional.dest, arg: String(arg)});
 							default:
 								parserState = CapturePositionalList(positional.dest, [arg]);
 						}
@@ -193,16 +247,26 @@ class CLI {
 						showUsage('Option $src requires an argument');
 						return null;
 					}
-					toks.push(TOption(spec.dest, arg));
+					toks.push({dest: spec.dest, arg: String(arg)});
 					parserState = Capture;
-				case CapturePositionalList(dest, list): // TODO(kcza): get this working!
+				case CapturePositionalList(dest, list):
 					if (arg.charAt(0) == "-") {
-						toks.push(TList(dest, list));
+						toks.push({dest: dest, arg: List(list)});
+						raw_args.unshift(arg);
 						parserState = Capture;
 					} else {
 						list.push(arg);
 					}
 			}
+		}
+
+		switch (parserState) {
+			case Capture:
+			case CaptureOption(src, spec):
+				showUsage('Option $src requires an argument');
+				return null;
+			case CapturePositionalList(dest, list):
+				toks.push({dest: dest, arg: List(list)});
 		}
 
 		return toks;
@@ -211,12 +275,14 @@ class CLI {
 	private function parseToks(toks: Array<Token>): Null<Args> {
 		var args:Args = new Map();
 
+		// Defaults
+		for (pos in spec.positionals)
+			args[pos.dest] = pos.getDefault();
+		for (opt in spec.options)
+			args[opt.dest] = opt.getDefault();
+
 		for (tok in toks)
-			switch (tok) {
-				case TFlag(dest, val): args[dest] = Flag(true); //Flag(val);
-				case TOption(dest, val): args[dest] = String(val);
-				case TList(dest, vals): args[dest] = List(vals);
-			}
+			args[tok.dest] = tok.arg;
 
 		if (!handleSpecialArgs(args))
 			return null;
@@ -253,15 +319,18 @@ class CLI {
 	}
 
 	private function handleSpecialArgs(args: Args): Bool {
-		if (args[HELP_DEST].match(Flag(true))) {
+		if (args[HELP_DEST] == true) {
 			showUsage();
 			return false;
 		}
 
-		if (args[LICENSE_DEST].match(Flag(true))) {
+		if (args[LICENSE_DEST] == true) {
 			showLicense();
 			return false;
 		}
+
+		args.remove(HELP_DEST);
+		args.remove(LICENSE_DEST);
 
 		return true;
 	}
