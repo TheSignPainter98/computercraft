@@ -1,109 +1,165 @@
 import lua.Lua;
 import lua.NativeStringTools;
 import haxe.Exception;
+import haxe.ValueException;
 using StringTools;
 
-inline final prog_name = "t4";
-
-// enum CLIAction {
-//	SetAutoStart(args: Array<String>);
-//	ExecuteMachine(action: (Array<String>)->ActionResult, machineArgs: Array<String>);
-//	ShowHelp;
-//	BadUsage(msg: String);
-// }
 final HELP_DEST = "@:HeLp_DeSt";
 final LICENSE_DEST = "@:LiCeNsE_dEsT";
 
 @:structInit class ProgSpec {
 	public var name: String;
-	public var helpOption: Option = {
+	public var helpOption: ArgSpec<Option> = {
 		dest: HELP_DEST,
-		short: "-h",
-		long: "--help",
 		desc: "Show this help and exit",
+		type: ToFlag(true),
+		trigger: {
+			short: "-h",
+			long: "--help",
+		},
 	};
-	public var licenseOption: Option = {
+	public var licenseOption: ArgSpec<Option> = {
 		dest: LICENSE_DEST,
-		short: "-l",
-		long: "--license",
 		desc: "Show license and exit",
+		type: ToFlag(true),
+		trigger: {
+			short: "-l",
+			long: "--license",
+		},
 	};
 	public var version: String = "1.0.0";
-	public var shortDescription: Null<String> = null;
-	public var description: Null<String>;
-	public var licenseInfo: Null<String> = null;
-	public var options: Array<Option> = [];
-	public var positionals: Array<PositionalArg> = [];
+	public var shortDesc: Null<String> = null;
+	public var date: String;
+	public var author: String;
+	public var desc: Null<String>;
+	public var license: Null<Array<String>> = null;
+	public var options: Array<ArgSpec<Option>> = [];
+	public var positionals: Array<ArgSpec<Positional>> = [];
 
-	public function shortDesc(): String {
-		var maybeDesc = shortDescription != null ? " - " + shortDescription : "";
-		return name + maybeDesc + " " + version;
+	public function signature(): String {
+		var maybeDesc = shortDesc != null ? " - " + shortDesc : "";
+		return name + maybeDesc + " v" + version;
+	}
+
+	public function copyright(): String {
+		return 'Copyright (C) $date $author';
 	}
 }
 
-@:structInit class PositionalArg {
+@:structInit class ArgSpec<T:ArgSpecTrigger> {
 	public var dest: String;
-	public var mandatory: Bool = true;
-	public var metavar: Null<String> = null;
 	public var desc: Null<String> = null;
-	public var howMany: ArgCount = Exactly(1);
-	public var dflt: Null<Arg> = null;
+	public var trigger: T;
+	public var type: ArgType;
+
+	public function mandatory(): Bool {
+		return switch (type) {
+			case ToFlag(_): false;
+			case ToString(s, _): s == null;
+			case ToInt(i, _): i == null;
+			case ToFloat(f, _): f == null;
+			case ToList(_): false;
+		}
+	}
+
+	public function name(): String {
+		return trigger.name();
+	}
+
+	public inline function getDefault(): Null<Arg> {
+		return
+			return switch (type) {
+				case ToFlag(b): Flag(!b);
+				case ToString(s, _): String(s);
+				case ToInt(i, _): Int(i);
+				case ToFloat(f, _): Float(f);
+				case ToList(_): List([]);
+			}
+	}
+}
+
+interface ArgSpecTrigger {
+	function name(): String;
+}
+
+@:structInit class Positional implements ArgSpecTrigger {
+	public var metavar: Null<String>;
+	public var howMany: ListCount = Exactly(1);
 
 	public inline function name(): String {
-		if (metavar != null)
-			return metavar;
-		return dest;
-	}
-
-	public inline function getDefault(): Null<Arg> {
-		if (dflt != null)
-			return dflt;
-		return switch (howMany) {
-			case Exactly(1):
-				String("");
-			default:
-				List([]);
-		}
+		return metavar;
 	}
 }
 
-@:structInit class Option {
-	public var dest: String;
-	public var mandatory: Bool = false;
-	public var desc: Null<String>;
+@:structInit class Option implements ArgSpecTrigger {
 	public var short: String;
 	public var long: String;
-	public var action: OptionAction = StoreTrue;
-	public var dflt: Null<Arg> = null;
 
-	public inline function name() {
+	public inline function name(): String {
 		return short;
-	}
-
-	public inline function getDefault(): Null<Arg> {
-		if (dflt != null)
-			return dflt;
-		return switch (action) {
-			case StoreTrue:
-				Flag(false);
-			case StoreFalse:
-				Flag(true);
-			default:
-				null;
-		}
 	}
 }
 
-enum ArgCount {
+enum ArgType {
+	ToFlag(store: Bool);
+	ToString(dflt: Null<String>, choices: Null<Array<String>>);
+	ToInt(dflt: Null<Int>, choices: Null<Array<Int>>);
+	ToFloat(dflt: Null<Float>, choices: Null<Array<Float>>);
+	ToList(type: ArgType);
+}
+
+// @:structInit class PositionalArg {
+//	public var dest: String;
+//	public var mandatory: Bool = true;
+//	public var metavar: Null<String> = null;
+//	public var desc: Null<String> = null;
+//	public var howMany: ListCount = Exactly(1);
+//	public var dflt: Null<Arg> = null;
+
+//	public inline function name(): String {
+//		if (metavar != null)
+//			return metavar;
+//		return dest;
+//	}
+// }
+
+// @:structInit class Option {
+//	public var dest: String;
+//	public var mandatory: Bool = false;
+//	public var desc: Null<String>;
+//	public var short: String;
+//	public var long: String;
+//	public var action: OptionAction = StoreTrue;
+//	public var dflt: Null<Arg> = null;
+
+//	public inline function name() {
+//		return short;
+//	}
+
+//	public inline function getDefault(): Null<Arg> {
+//		if (dflt != null)
+//			return dflt;
+//		return switch (action) {
+//			case StoreTrue:
+//				Flag(false);
+//			case StoreFalse:
+//				Flag(true);
+//			default:
+//				null;
+//		}
+//	}
+// }
+
+enum ListCount {
 	AtLeast(n: Int);
 	Exactly(n: Int);
 }
 
-enum OptionAction {
-	StoreTrue;
-	StoreFalse;
-	Store;
-}
+// enum OptionAction {
+//	StoreTrue;
+//	StoreFalse;
+//	Store;
+// }
 
 class NoSuchArgumentException extends Exception {}
 
@@ -124,7 +180,8 @@ abstract Args(Map<String, Arg>) from Map<String, Arg> to Map<String, Arg> {
 
 enum Arg {
 	Flag(val: Bool);
-	// Int(int: Int);
+	Int(int: Int);
+	Float(float: Float);
 	String(val: String);
 	List(vals: Array<String>);
 }
@@ -136,18 +193,18 @@ enum Arg {
 
 enum ParserState {
 	Capture;
-	CaptureOption(src: String, opt: Option);
+	CaptureOption(src: String, opt: ArgSpec<Option>);
 	CapturePositionalList(dest: String, list: Array<String>);
 }
 
 class CLI {
 	private var spec: ProgSpec;
-	private var optionMap: Map<String, Option>;
+	private var optionMap: Map<String, ArgSpec<Option>>;
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
 		spec.options = [ spec.helpOption, spec.licenseOption ].concat(spec.options);
-		this.optionMap = [ for (o in spec.options) for (trigger in [o.short, o.long]) trigger => o ];
+		this.optionMap = [ for (o in spec.options) for (trigger in [o.trigger.short, o.trigger.long]) trigger => o ];
 	}
 
 	public function parse(args: Array<String>): Null<Args> {
@@ -171,21 +228,27 @@ class CLI {
 			switch (parserState) {
 				case Capture:
 					if (arg == "--") {
-						var positional: Null<PositionalArg> = null;
+						var positional: Null<ArgSpec<Positional>> = null;
 						while (positionalIterator.hasNext() && raw_args.length != 0) {
 							positional = positionalIterator.next();
-							switch (positional.howMany) {
+							switch (positional.trigger.howMany) {
 								case Exactly(1):
 									toks.push({
 										dest: positional.dest,
 										arg: String(raw_args[0]),
 									});
-								case AtLeast(n) | Exactly(n):
+								case Exactly(n):
 									toks.push({
 										dest: positional.dest,
 										arg: List(raw_args.slice(0, n)),
 									});
 									raw_args = raw_args.slice(n);
+								case AtLeast(_):
+									toks.push({
+										dest: positional.dest,
+										arg: List(raw_args),
+									});
+									raw_args = [];
 							}
 						}
 
@@ -194,30 +257,28 @@ class CLI {
 							return null;
 						}
 
-						if (positional.howMany.match(Exactly(1))) {
-							toks.push({
-								dest: positional.dest,
-								arg: String(raw_args[0]),
-							});
-						} else {
-							toks.push({
-								dest: positional.dest,
-								arg: List(raw_args),
-							});
-						}
+						// if (positional.trigger.howMany.match(Exactly(1))) {
+						//	toks.push({
+						//		dest: positional.dest,
+						//		arg: String(raw_args[0]),
+						//	});
+						// } else {
+						//	toks.push({
+						//		dest: positional.dest,
+						//		arg: List(raw_args),
+						//	});
+						// }
 
 						return toks;
-					} else if (arg.charAt(0) == "-") { // TODO(kcza) kebab short flag usage
+					} else if (arg.charAt(0) == "-") {
 						for (i in 1...arg.length) {
 							var dekebabedArg = "-" + arg.charAt(i);
 							var optSpec = optionMap[dekebabedArg];
 							if (optSpec != null)
-								switch (optSpec.action) {
-									case StoreTrue:
-										toks.push({dest: optSpec.dest, arg: Flag(true)});
-									case StoreFalse:
-										toks.push({dest: optSpec.dest, arg: Flag(false)});
-									case Store:
+								switch (optSpec.type) {
+									case ToFlag(f):
+										toks.push({dest: optSpec.dest, arg: Flag(f)});
+									default:
 										if (i < arg.length - 1)
 											raw_args.unshift(arg.substr(i + 1));
 										parserState = CaptureOption(dekebabedArg, optSpec);
@@ -235,7 +296,7 @@ class CLI {
 						}
 
 						var positional = positionalIterator.next();
-						switch (positional.howMany) {
+						switch (positional.trigger.howMany) {
 							case Exactly(1):
 								toks.push({dest: positional.dest, arg: String(arg)});
 							default:
@@ -276,10 +337,8 @@ class CLI {
 		var args:Args = new Map();
 
 		// Defaults
-		for (pos in spec.positionals)
-			args[pos.dest] = pos.getDefault();
-		for (opt in spec.options)
-			args[opt.dest] = opt.getDefault();
+		insertDefaultsInto(args, spec.positionals);
+		insertDefaultsInto(args, spec.options);
 
 		for (tok in toks)
 			args[tok.dest] = tok.arg;
@@ -287,35 +346,97 @@ class CLI {
 		if (!handleSpecialArgs(args))
 			return null;
 
-		if (!checkMandatoryArgs(args)) {
+		var problems = checkMandatoryArgs(args).concat(checkChoices(args));
+		if (problems.length != 0) {
+			showUsage(problems.join("\n"));
 			return null;
 		}
+
+		removeSpecialArgs(args);
 		return args;
 	}
 
-	private function checkMandatoryArgs(args: Args): Bool {
-		var ret = true;
+	private function insertDefaultsInto<T:ArgSpecTrigger>(args: Args, specs: Array<ArgSpec<T>>) {
+		for (spec in specs) {
+			var dflt = spec.getDefault();
+			if (dflt != null)
+				args[spec.dest] = dflt;
+		}
+	}
+
+	private function checkChoices(args: Args): Array<String> {
+		return checkChoicesOf(spec.options, args).concat(checkChoicesOf(spec.positionals, args));
+	}
+
+	private function checkChoicesOf<T:ArgSpecTrigger>(specs: Array<ArgSpec<T>>, args: Args): Array<String> {
+		var problems = [];
+
+		for (spec in specs) {
+			var val = args[spec.dest];
+			switch (spec.type) {
+				case ToString(_, null) | ToInt(_, null) | ToFloat(_, null):
+				case ToString(_, choices):
+					var arg = args[spec.dest];
+					if (arg == null)
+						continue;
+
+					checkChoiceSpec(spec, cast args[spec.dest], choices, problems);
+				case ToInt(_, choices):
+					var arg = args[spec.dest];
+					if (arg == null)
+						continue;
+
+					var i = Std.parseInt(arg);
+					if (i == null) {
+						problems.push('Expected integer, got "$arg"');
+						continue;
+					}
+					args[spec.dest] = Int(i);
+
+					checkChoiceSpec(spec, i, choices, problems);
+				case ToFloat(_, choices):
+					var arg = args[spec.dest];
+					if (arg == null)
+						continue;
+
+					var f = Std.parseFloat(arg);
+					if (f == null) {
+						problems.push('Expected float, got "$arg"');
+						continue;
+					}
+
+					args[spec.dest] = Float(f);
+					checkChoiceSpec(spec, f, choices, problems);
+				default:
+			}
+		}
+
+		return problems;
+	}
+
+	private function checkChoiceSpec<T:ArgSpecTrigger, S>(spec: ArgSpec<T>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
+		if (choices.indexOf(val) == -1)
+			problems.push('Option ${spec.name()} got $val, expected one of: ${choices.join(", ")}');
+	}
+
+	private function checkMandatoryArgs(args: Args): Array<String> {
 		var problems: Array<String> = [];
 
 		for (option in spec.options)
-			if (option.mandatory && args[option.dest] == null) {
-				problems.push('Missing mandatory option ${option.name()}');
-				ret = false;
-			}
+			if (option.mandatory() && args[option.dest] == null)
+				problems.push('Missing mandatory flag: ${option.name()}');
 
-		for (positional in spec.positionals)
-			if (positional.mandatory && args[positional.dest] == null) {
-				switch (positional.howMany) {
+		for (positional in spec.positionals){
+			if (positional.mandatory() && args[positional.dest] == null) {
+				switch (positional.trigger.howMany) {
 					case AtLeast(0):
 					default:
-						problems.push('Missing ${positional.name()}');
-						ret = false;
+						problems.push('Missing mandatory positional: ${positional.name()}');
 				}
 			}
+		}
 
-		if (!ret)
-			showUsage(problems.join("\n"));
-		return ret;
+		return problems;
 	}
 
 	private function handleSpecialArgs(args: Args): Bool {
@@ -329,15 +450,18 @@ class CLI {
 			return false;
 		}
 
-		args.remove(HELP_DEST);
-		args.remove(LICENSE_DEST);
-
 		return true;
 	}
 
+	private function removeSpecialArgs(args: Args) {
+		args.remove(HELP_DEST);
+		args.remove(LICENSE_DEST);
+	}
+
 	private function showLicense() {
-		if (spec.licenseInfo != null)
-			Lua.print(spec.shortDesc() + "\n" + spec.licenseInfo);
+		if (spec.license != null) {
+			Lua.print([spec.signature(), spec.copyright(), "",].concat(spec.license).join("\n"));
+		}
 	}
 
 	private function showUsage(?problem:String) {
@@ -365,18 +489,3 @@ class CLI {
 				);
 	}
 }
-
-// I know, but that's rather the point, don't you think?
-// For if it were not for this tapping, how would you really know that my keyboard is indeed superior to that whch comes as standard on this laptop which I see before me? This laptop which, if I do so correctly recall, you failed to bring with us on our present excursion...
-
-// class CLIActionUtils {
-//	public static function execute(action: CLIAction): ActionResult {
-//		return switch (action) {
-//			case SetAutoStart(args): _setAutoStart(args);
-//			case ExecuteMachine(f, args): f(args);
-//			case ShowHelp: _showUsage();
-//			case BadUsage(msg): _showUsage(msg);
-//		};
-//	}
-
-// }
