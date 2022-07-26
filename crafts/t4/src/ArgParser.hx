@@ -249,7 +249,7 @@ enum ParserState {
 	CapturePositionalList(dest: String, list: Array<String>);
 }
 
-class CLI {
+class ArgParser {
 	private var spec: ProgSpec;
 	private var optionMap: Map<String, ArgSpec<Option>>;
 

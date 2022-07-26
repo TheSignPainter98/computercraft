@@ -1,4 +1,5 @@
-import CLI;
+import ArgParser;
+import ArgParser.ProgSpec;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
 import cc.Vector;
@@ -76,7 +77,7 @@ class Main {
 		haxe.macro.Compiler.includeFile("prepend.lua");
 		var args = Sys.args();
 
-		var parser = new CLI(cliSpec);
+		var parser = new ArgParser(cliSpec);
 		var args = parser.parse(Sys.args());
 		if (args == null) {
 			return;
