@@ -76,10 +76,18 @@ final LICENSE_DEST = "@:LiCeNsE_dEsT";
 				case ToList(_): List([]);
 			}
 	}
+
+	public inline function signature(): String {
+		var inner = trigger.signature();
+		if (!mandatory())
+			return '[$inner]';
+		return inner;
+	}
 }
 
 interface ArgSpecTrigger {
 	function name(): String;
+	function signature(): String;
 }
 
 @:structInit class Positional implements ArgSpecTrigger {
@@ -89,6 +97,13 @@ interface ArgSpecTrigger {
 	public inline function name(): String {
 		return metavar;
 	}
+
+	public inline function signature(): String {
+		return switch (howMany) {
+			case Exactly(1): metavar;
+			default: '$metavar...';
+		}
+	}
 }
 
 @:structInit class Option implements ArgSpecTrigger {
@@ -97,6 +112,10 @@ interface ArgSpecTrigger {
 
 	public inline function name(): String {
 		return short;
+	}
+
+	public inline function signature(): String {
+		return name();
 	}
 }
 
@@ -253,7 +272,7 @@ class CLI {
 						}
 
 						if (positional == null) {
-							showUsage("Cannot sink remaining arguments");
+							showHelp("Cannot sink remaining arguments");
 							return null;
 						}
 
@@ -285,13 +304,13 @@ class CLI {
 										break;
 								}
 							else {
-								showUsage('Unknown option: $dekebabedArg');
+								showHelp('Unknown option: $dekebabedArg');
 								return null;
 							}
 						}
 					} else {
 						if (!positionalIterator.hasNext()) {
-							showUsage('Unmatched arguments: ${[arg].concat(raw_args).join(' ')}');
+							showHelp('Unmatched arguments: ${[arg].concat(raw_args).join(' ')}');
 							return null;
 						}
 
@@ -305,7 +324,7 @@ class CLI {
 					}
 				case CaptureOption(src, spec):
 					if (arg.charAt(0) == "-") {
-						showUsage('Option $src requires an argument');
+						showHelp('Option $src requires an argument');
 						return null;
 					}
 					toks.push({dest: spec.dest, arg: String(arg)});
@@ -324,7 +343,7 @@ class CLI {
 		switch (parserState) {
 			case Capture:
 			case CaptureOption(src, spec):
-				showUsage('Option $src requires an argument');
+				showHelp('Option $src requires an argument');
 				return null;
 			case CapturePositionalList(dest, list):
 				toks.push({dest: dest, arg: List(list)});
@@ -348,7 +367,7 @@ class CLI {
 
 		var problems = checkMandatoryArgs(args).concat(checkChoices(args));
 		if (problems.length != 0) {
-			showUsage(problems.join("\n"));
+			showHelp(problems.join("\n"));
 			return null;
 		}
 
@@ -441,7 +460,7 @@ class CLI {
 
 	private function handleSpecialArgs(args: Args): Bool {
 		if (args[HELP_DEST] == true) {
-			showUsage();
+			showHelp();
 			return false;
 		}
 
@@ -464,11 +483,11 @@ class CLI {
 		}
 	}
 
-	private function showUsage(?problem:String) {
-		// TODO: complete me!, usage
+	private function showHelp(?problem:String) {
+		// TODO: complete me!
 		var msg = '
 
-			usage: ${spec.name} [COMMAND]
+			usage: ${showUsage()}
 
 			COMMANDS:
 
@@ -487,5 +506,17 @@ class CLI {
 				.map((s) -> s.substr(3).replace("^", "    "))
 				.join("\n")
 				);
+	}
+
+	private function showUsage(): String {
+		var usageParts = [spec.name];
+
+		for (opt in spec.options)
+			usageParts.push(opt.signature());
+
+		for (pos in spec.positionals)
+			usageParts.push(pos.signature());
+
+		return usageParts.join(" ");
 	}
 }

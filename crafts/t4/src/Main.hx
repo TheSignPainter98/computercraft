@@ -74,6 +74,7 @@ class Main {
 
 	public static function main() {
 		haxe.macro.Compiler.includeFile("prepend.lua");
+		var args = Sys.args();
 
 		var parser = new CLI(cliSpec);
 		var args = parser.parse(Sys.args());
@@ -101,5 +102,11 @@ class Main {
 
 	private static function execMachine(machine: String, machine_args: Array<String>) {
 		trace(machine, machine_args);
+	}
+
+	static function setAutoStart(command:String) {
+		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
+		f.write('shell.run("t4", "$command")');
+		f.close();
 	}
 }
