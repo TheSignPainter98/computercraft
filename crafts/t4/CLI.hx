@@ -52,6 +52,18 @@ final LICENSE_DEST = "@:LiCeNsE_dEsT";
 	public var trigger: T;
 	public var type: ArgType;
 
+	public function compare(other: ArgSpec<T>): Int {
+		var k1 = name();
+		var k2 = other.name();
+		if (k1 < k2) {
+			return -1;
+		} else if (k1 == k2) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+
 	public function mandatory(): Bool {
 		return switch (type) {
 			case ToFlag(_): false;
@@ -78,16 +90,30 @@ final LICENSE_DEST = "@:LiCeNsE_dEsT";
 	}
 
 	public inline function signature(): String {
-		var inner = trigger.signature();
+		var inner = trigger.signature(type);
 		if (!mandatory())
 			return '[$inner]';
 		return inner;
+	}
+
+	public static function choicesSignature(type: ArgType): Null<String> {
+		var choices: Array<Any> = switch(type) {
+			case ToFlag(_) | ToString(_, null) | ToInt(_, null) | ToFloat(_, null): [];
+			case ToString(_, choices): choices;
+			case ToInt(_, choices): choices;
+			case ToFloat(_, choices): choices;
+			default: [];
+		}
+
+		if (choices.length == 0)
+			return null;
+		return '{${choices.join(", ")}}';
 	}
 }
 
 interface ArgSpecTrigger {
 	function name(): String;
-	function signature(): String;
+	function signature(type: ArgType): String;
 }
 
 @:structInit class Positional implements ArgSpecTrigger {
@@ -98,10 +124,13 @@ interface ArgSpecTrigger {
 		return metavar;
 	}
 
-	public inline function signature(): String {
+	public inline function signature(type: ArgType): String {
+		var content = ArgSpec.choicesSignature(type);
+		if (content == null)
+			content = metavar;
 		return switch (howMany) {
-			case Exactly(1): metavar;
-			default: '$metavar...';
+			case Exactly(1): content;
+			default: '$content...';
 		}
 	}
 }
@@ -114,8 +143,12 @@ interface ArgSpecTrigger {
 		return short;
 	}
 
-	public inline function signature(): String {
-		return name();
+	public inline function signature(type: ArgType): String {
+		var sigParts = [name()];
+		var choicesSig = ArgSpec.choicesSignature(type);
+		if (choicesSig != null)
+			sigParts.push(choicesSig);
+		return sigParts.join(" ");
 	}
 }
 
@@ -272,7 +305,7 @@ class CLI {
 						}
 
 						if (positional == null) {
-							showHelp("Cannot sink remaining arguments");
+							showUsage("Cannot sink remaining arguments");
 							return null;
 						}
 
@@ -304,13 +337,13 @@ class CLI {
 										break;
 								}
 							else {
-								showHelp('Unknown option: $dekebabedArg');
+								showUsage('Unknown option: $dekebabedArg');
 								return null;
 							}
 						}
 					} else {
 						if (!positionalIterator.hasNext()) {
-							showHelp('Unmatched arguments: ${[arg].concat(raw_args).join(' ')}');
+							showUsage('Unmatched arguments: ${[arg].concat(raw_args).join(' ')}');
 							return null;
 						}
 
@@ -324,7 +357,7 @@ class CLI {
 					}
 				case CaptureOption(src, spec):
 					if (arg.charAt(0) == "-") {
-						showHelp('Option $src requires an argument');
+						showUsage('Option $src requires an argument');
 						return null;
 					}
 					toks.push({dest: spec.dest, arg: String(arg)});
@@ -343,7 +376,7 @@ class CLI {
 		switch (parserState) {
 			case Capture:
 			case CaptureOption(src, spec):
-				showHelp('Option $src requires an argument');
+				showUsage('Option $src requires an argument');
 				return null;
 			case CapturePositionalList(dest, list):
 				toks.push({dest: dest, arg: List(list)});
@@ -367,7 +400,7 @@ class CLI {
 
 		var problems = checkMandatoryArgs(args).concat(checkChoices(args));
 		if (problems.length != 0) {
-			showHelp(problems.join("\n"));
+			showUsage(problems.join("\n"));
 			return null;
 		}
 
@@ -435,7 +468,7 @@ class CLI {
 
 	private function checkChoiceSpec<T:ArgSpecTrigger, S>(spec: ArgSpec<T>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
 		if (choices.indexOf(val) == -1)
-			problems.push('Option ${spec.name()} got $val, expected one of: ${choices.join(", ")}');
+			problems.push('Option "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
 	}
 
 	private function checkMandatoryArgs(args: Args): Array<String> {
@@ -483,33 +516,44 @@ class CLI {
 		}
 	}
 
-	private function showHelp(?problem:String) {
-		// TODO: complete me!
-		var msg = '
+	private function showHelp() {
+		showUsage();
 
-			usage: ${showUsage()}
+		spec.positionals.sort((p1, p2) -> p1.compare(p2));
+		var help = [];
 
-			COMMANDS:
+		if (spec.options.length != 0) {
+			help.push("OPTIONS");
 
-			^display Create a new display driver
-			^help    Display help about a given command and exit
-			^server  Create a new world server (one per world)
-			^signal  Create a new signal
-			^yard    Create a new train yard
+			for (opt in spec.options) {
+				var choicesSig = ArgSpec.choicesSignature(opt.type);
+				var choicesMark = "";
+				if (choicesSig != null)
+					choicesMark = ' $choicesSig';
+				help.push('    ${opt.trigger.short}$choicesMark, ${opt.trigger.long}$choicesMark');
+				help.push('        ${opt.desc}');
+			}
+		}
+		if (spec.positionals.length != 0) {
+			help.push("ARGUMENTS");
 
-			';
-		if (problem != null)
-			Lua.print(problem);
-		Lua.print(
-				msg.split("\n")
-				.slice(1, -1)
-				.map((s) -> s.substr(3).replace("^", "    "))
-				.join("\n")
-				);
+			for (pos in spec.positionals) {
+				var choicesSig = ArgSpec.choicesSignature(pos.type);
+				var choicesMark = "";
+				if (choicesSig != null)
+					choicesMark = ' (in $choicesSig)';
+				help.push('    ${pos.name()}$choicesMark');
+				help.push('        ${pos.desc}');
+			}
+		}
+
+		Lua.print(help.join("\n"));
 	}
 
-	private function showUsage(): String {
-		var usageParts = [spec.name];
+	private function showUsage(?problem: String) {
+		var usageParts = ["usage:", spec.name];
+
+		spec.options.sort((o1, o2) -> o1.compare(o2));
 
 		for (opt in spec.options)
 			usageParts.push(opt.signature());
@@ -517,6 +561,14 @@ class CLI {
 		for (pos in spec.positionals)
 			usageParts.push(pos.signature());
 
-		return usageParts.join(" ");
+		if (problem != null)
+			Lua.print(problem);
+		Lua.print(usageParts.join(" "));
+
+		if (problem != null)
+			Lua.print('For more information, try the ${spec.helpOption.trigger.long} flag.');
+	}
+
+	private function sortParameters() {
 	}
 }

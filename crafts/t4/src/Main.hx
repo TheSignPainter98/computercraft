@@ -46,7 +46,7 @@ class Main {
 			desc: "The arguments to pass to the machine",
 			type: ToList(ToString(null, null)),
 			trigger: {
-				metavar: "arg",
+				metavar: "args",
 				howMany: AtLeast(0),
 			},
 		}
