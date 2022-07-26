@@ -16,7 +16,7 @@ class Main {
 	private static var cliSpec: ProgSpec = {
 		name: "t4",
 		shortDesc: "Trainable train-track tracker",
-		desc: "Trainable train-track tracker, a tracker which tracks trains on train tracks, and which trains on train timetables",
+		desc: "Trainable train-track tracker: a tracker which tracks trains on train tracks, and which trains to track the tracks taken by trains.",
 		author: "The authors of t4",
 		date: "2022",
 		license: [

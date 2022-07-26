@@ -520,10 +520,16 @@ class CLI {
 		showUsage();
 
 		spec.positionals.sort((p1, p2) -> p1.compare(p2));
-		var help = [];
+		var help = [""];
+
+		help.push("DESCRIPTION");
+		help.push("");
+		help.push(spec.desc);
 
 		if (spec.options.length != 0) {
+			help.push("");
 			help.push("OPTIONS");
+			help.push("");
 
 			for (opt in spec.options) {
 				var choicesSig = ArgSpec.choicesSignature(opt.type);
@@ -535,7 +541,9 @@ class CLI {
 			}
 		}
 		if (spec.positionals.length != 0) {
+			help.push("");
 			help.push("ARGUMENTS");
+			help.push("");
 
 			for (pos in spec.positionals) {
 				var choicesSig = ArgSpec.choicesSignature(pos.type);
