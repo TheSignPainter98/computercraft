@@ -322,25 +322,39 @@ class ArgParser {
 						// }
 
 						return toks;
-					} else if (arg.charAt(0) == "-") {
-						for (i in 1...arg.length) {
-							var dekebabedArg = "-" + arg.charAt(i);
-							var optSpec = optionMap[dekebabedArg];
-							if (optSpec != null)
+					} else if (arg.charAt(0) == "-" && arg.length > 1) {
+						if (arg.substr(0, 2) == "--") {
+							var optSpec = optionMap[arg];
+							if (optSpec != null) {
 								switch (optSpec.type) {
 									case ToFlag(f):
 										toks.push({dest: optSpec.dest, arg: Flag(f)});
 									default:
-										if (i < arg.length - 1)
-											raw_args.unshift(arg.substr(i + 1));
-										parserState = CaptureOption(dekebabedArg, optSpec);
-										break;
+										parserState = CaptureOption(arg, optSpec);
 								}
-							else {
-								showUsage('Unknown option: $dekebabedArg');
+							} else {
+								showUsage('Unknown option: $arg');
 								return null;
 							}
-						}
+						} else
+							for (i in 1...arg.length) {
+								var dekebabedArg = "-" + arg.charAt(i);
+								var optSpec = optionMap[dekebabedArg];
+								if (optSpec != null)
+									switch (optSpec.type) {
+										case ToFlag(f):
+											toks.push({dest: optSpec.dest, arg: Flag(f)});
+										default:
+											if (i < arg.length - 1)
+												raw_args.unshift(arg.substr(i + 1));
+											parserState = CaptureOption(dekebabedArg, optSpec);
+											break;
+									}
+								else {
+									showUsage('Unknown option: $dekebabedArg');
+									return null;
+								}
+							}
 					} else {
 						if (!positionalIterator.hasNext()) {
 							showUsage('Unmatched arguments: ${[arg].concat(raw_args).join(' ')}');
@@ -356,14 +370,14 @@ class ArgParser {
 						}
 					}
 				case CaptureOption(src, spec):
-					if (arg.charAt(0) == "-") {
+					if (arg.charAt(0) == "-" && arg != "-") {
 						showUsage('Option $src requires an argument');
 						return null;
 					}
 					toks.push({dest: spec.dest, arg: String(arg)});
 					parserState = Capture;
 				case CapturePositionalList(dest, list):
-					if (arg.charAt(0) == "-") {
+					if (arg.charAt(0) == "-" && arg != "-") {
 						toks.push({dest: dest, arg: List(list)});
 						raw_args.unshift(arg);
 						parserState = Capture;
