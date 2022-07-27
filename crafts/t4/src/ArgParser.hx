@@ -6,6 +6,7 @@ using StringTools;
 
 final HELP_DEST = "@:HeLp_DeSt";
 final LICENSE_DEST = "@:LiCeNsE_dEsT";
+final VERSION_DEST = "@:VeRsIoN_dEsT!";
 
 @:structInit class ProgSpec {
 	public var name: String;
@@ -25,6 +26,15 @@ final LICENSE_DEST = "@:LiCeNsE_dEsT";
 		trigger: {
 			short: "-l",
 			long: "--license",
+		},
+	};
+	public var versionOption: ArgSpec<Option> = {
+		dest: VERSION_DEST,
+		desc: "Outout version information and exit",
+		type: ToFlag(true),
+		trigger: {
+			short: "-V",
+			long: "--version",
 		},
 	};
 	public var version: String = "1.0.0";
@@ -255,7 +265,7 @@ class ArgParser {
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
-		spec.options = [ spec.helpOption, spec.licenseOption ].concat(spec.options);
+		spec.options = [ spec.helpOption, spec.licenseOption, spec.versionOption ].concat(spec.options);
 		this.optionMap = [ for (o in spec.options) for (trigger in [o.trigger.short, o.trigger.long]) trigger => o ];
 	}
 
@@ -516,18 +526,28 @@ class ArgParser {
 			return false;
 		}
 
+		if (args[VERSION_DEST] == true) {
+			showVersion();
+			return false;
+		}
+
 		return true;
 	}
 
 	private function removeSpecialArgs(args: Args) {
 		args.remove(HELP_DEST);
 		args.remove(LICENSE_DEST);
+		args.remove(VERSION_DEST);
 	}
 
 	private function showLicense() {
 		if (spec.license != null) {
 			Lua.print([spec.signature(), spec.copyright(), "",].concat(spec.license).join("\n"));
 		}
+	}
+
+	private function showVersion() {
+		Lua.print('${spec.name} ${spec.version}');
 	}
 
 	private function showHelp() {
