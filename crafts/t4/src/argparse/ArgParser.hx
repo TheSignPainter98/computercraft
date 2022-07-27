@@ -1,252 +1,8 @@
+package argparse;
+
 import lua.Lua;
 import lua.NativeStringTools;
-import haxe.Exception;
-import haxe.ValueException;
 using StringTools;
-
-final HELP_DEST = "@:HeLp_DeSt";
-final LICENSE_DEST = "@:LiCeNsE_dEsT";
-final VERSION_DEST = "@:VeRsIoN_dEsT!";
-
-@:structInit class ProgSpec {
-	public var name: String;
-	public var helpOption: ArgSpec<Option> = {
-		dest: HELP_DEST,
-		desc: "Show this help and exit",
-		type: ToFlag(true),
-		trigger: {
-			short: "-h",
-			long: "--help",
-		},
-	};
-	public var licenseOption: ArgSpec<Option> = {
-		dest: LICENSE_DEST,
-		desc: "Show license and exit",
-		type: ToFlag(true),
-		trigger: {
-			short: "-l",
-			long: "--license",
-		},
-	};
-	public var versionOption: ArgSpec<Option> = {
-		dest: VERSION_DEST,
-		desc: "Outout version information and exit",
-		type: ToFlag(true),
-		trigger: {
-			short: "-V",
-			long: "--version",
-		},
-	};
-	public var version: String = "1.0.0";
-	public var shortDesc: Null<String> = null;
-	public var date: String;
-	public var author: String;
-	public var desc: Null<String>;
-	public var license: Null<Array<String>> = null;
-	public var options: Array<ArgSpec<Option>> = [];
-	public var positionals: Array<ArgSpec<Positional>> = [];
-
-	public function signature(): String {
-		var maybeDesc = shortDesc != null ? " - " + shortDesc : "";
-		return name + maybeDesc + " v" + version;
-	}
-
-	public function copyright(): String {
-		return 'Copyright (C) $date $author';
-	}
-}
-
-@:structInit class ArgSpec<T:ArgSpecTrigger> {
-	public var dest: String;
-	public var desc: Null<String> = null;
-	public var trigger: T;
-	public var type: ArgType;
-
-	public function compare(other: ArgSpec<T>): Int {
-		var k1 = name();
-		var k2 = other.name();
-		if (k1 < k2) {
-			return -1;
-		} else if (k1 == k2) {
-			return 0;
-		} else {
-			return 1;
-		}
-	}
-
-	public function mandatory(): Bool {
-		return switch (type) {
-			case ToFlag(_): false;
-			case ToString(s, _): s == null;
-			case ToInt(i, _): i == null;
-			case ToFloat(f, _): f == null;
-			case ToList(_): false;
-		}
-	}
-
-	public function name(): String {
-		return trigger.name();
-	}
-
-	public inline function getDefault(): Null<Arg> {
-		return
-			return switch (type) {
-				case ToFlag(b): Flag(!b);
-				case ToString(s, _): String(s);
-				case ToInt(i, _): Int(i);
-				case ToFloat(f, _): Float(f);
-				case ToList(_): List([]);
-			}
-	}
-
-	public inline function signature(): String {
-		var inner = trigger.signature(type);
-		if (!mandatory())
-			return '[$inner]';
-		return inner;
-	}
-
-	public static function choicesSignature(type: ArgType): Null<String> {
-		var choices: Array<Any> = switch(type) {
-			case ToFlag(_) | ToString(_, null) | ToInt(_, null) | ToFloat(_, null): [];
-			case ToString(_, choices): choices;
-			case ToInt(_, choices): choices;
-			case ToFloat(_, choices): choices;
-			default: [];
-		}
-
-		if (choices.length == 0)
-			return null;
-		return '{${choices.join(", ")}}';
-	}
-}
-
-interface ArgSpecTrigger {
-	function name(): String;
-	function signature(type: ArgType): String;
-}
-
-@:structInit class Positional implements ArgSpecTrigger {
-	public var metavar: Null<String>;
-	public var howMany: ListCount = Exactly(1);
-
-	public inline function name(): String {
-		return metavar;
-	}
-
-	public inline function signature(type: ArgType): String {
-		var content = ArgSpec.choicesSignature(type);
-		if (content == null)
-			content = metavar;
-		return switch (howMany) {
-			case Exactly(1): content;
-			default: '$content...';
-		}
-	}
-}
-
-@:structInit class Option implements ArgSpecTrigger {
-	public var short: String;
-	public var long: String;
-
-	public inline function name(): String {
-		return short;
-	}
-
-	public inline function signature(type: ArgType): String {
-		var sigParts = [name()];
-		var choicesSig = ArgSpec.choicesSignature(type);
-		if (choicesSig != null)
-			sigParts.push(choicesSig);
-		return sigParts.join(" ");
-	}
-}
-
-enum ArgType {
-	ToFlag(store: Bool);
-	ToString(dflt: Null<String>, choices: Null<Array<String>>);
-	ToInt(dflt: Null<Int>, choices: Null<Array<Int>>);
-	ToFloat(dflt: Null<Float>, choices: Null<Array<Float>>);
-	ToList(type: ArgType);
-}
-
-// @:structInit class PositionalArg {
-//	public var dest: String;
-//	public var mandatory: Bool = true;
-//	public var metavar: Null<String> = null;
-//	public var desc: Null<String> = null;
-//	public var howMany: ListCount = Exactly(1);
-//	public var dflt: Null<Arg> = null;
-
-//	public inline function name(): String {
-//		if (metavar != null)
-//			return metavar;
-//		return dest;
-//	}
-// }
-
-// @:structInit class Option {
-//	public var dest: String;
-//	public var mandatory: Bool = false;
-//	public var desc: Null<String>;
-//	public var short: String;
-//	public var long: String;
-//	public var action: OptionAction = StoreTrue;
-//	public var dflt: Null<Arg> = null;
-
-//	public inline function name() {
-//		return short;
-//	}
-
-//	public inline function getDefault(): Null<Arg> {
-//		if (dflt != null)
-//			return dflt;
-//		return switch (action) {
-//			case StoreTrue:
-//				Flag(false);
-//			case StoreFalse:
-//				Flag(true);
-//			default:
-//				null;
-//		}
-//	}
-// }
-
-enum ListCount {
-	AtLeast(n: Int);
-	Exactly(n: Int);
-}
-
-// enum OptionAction {
-//	StoreTrue;
-//	StoreFalse;
-//	Store;
-// }
-
-class NoSuchArgumentException extends Exception {}
-
-@:forward
-abstract Args(Map<String, Arg>) from Map<String, Arg> to Map<String, Arg> {
-	@:op([]) @:op(a.b) inline function get<T>(key: String): T {
-		var val = this.get(key);
-		if (val == null)
-			throw new NoSuchArgumentException('No such argument "$key"');
-		return cast Type.enumParameters(val)[0];
-	}
-
-	@:op([]) inline function set(key: String, val: Arg) {
-		this.set(key, val);
-		return val;
-	}
-}
-
-enum Arg {
-	Flag(val: Bool);
-	Int(int: Int);
-	Float(float: Float);
-	String(val: String);
-	List(vals: Array<String>);
-}
 
 @:structInit class Token {
 	public var dest: String;
@@ -467,7 +223,7 @@ class ArgParser {
 						problems.push('Expected integer, got "$arg"');
 						continue;
 					}
-					args[spec.dest] = Int(i);
+					args[spec.dest] = Arg.Int(i);
 
 					checkChoiceSpec(spec, i, choices, problems);
 				case ToFloat(_, choices):
@@ -481,7 +237,7 @@ class ArgParser {
 						continue;
 					}
 
-					args[spec.dest] = Float(f);
+					args[spec.dest] = Arg.Float(f);
 					checkChoiceSpec(spec, f, choices, problems);
 				default:
 			}
@@ -516,17 +272,17 @@ class ArgParser {
 	}
 
 	private function handleSpecialArgs(args: Args): Bool {
-		if (args[HELP_DEST] == true) {
+		if (args[ProgSpec.HELP_DEST] == true) {
 			showHelp();
 			return false;
 		}
 
-		if (args[LICENSE_DEST] == true) {
+		if (args[ProgSpec.LICENSE_DEST] == true) {
 			showLicense();
 			return false;
 		}
 
-		if (args[VERSION_DEST] == true) {
+		if (args[ProgSpec.VERSION_DEST] == true) {
 			showVersion();
 			return false;
 		}
@@ -535,9 +291,9 @@ class ArgParser {
 	}
 
 	private function removeSpecialArgs(args: Args) {
-		args.remove(HELP_DEST);
-		args.remove(LICENSE_DEST);
-		args.remove(VERSION_DEST);
+		args.remove(ProgSpec.HELP_DEST);
+		args.remove(ProgSpec.LICENSE_DEST);
+		args.remove(ProgSpec.VERSION_DEST);
 	}
 
 	private function showLicense() {

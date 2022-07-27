@@ -1,5 +1,5 @@
-import ArgParser;
-import ArgParser.ProgSpec;
+import argparse.ArgParser;
+import argparse.ProgSpec;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
 import cc.Vector;
