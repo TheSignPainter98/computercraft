@@ -17,7 +17,7 @@ class Main {
 	private static var cliSpec: ProgSpec = {
 		name: "t4",
 		shortDesc: "Trainable train-track tracker",
-		desc: "Trainable train-track tracker: a tracker which tracks trains on train tracks, and which trains to track the tracks taken by trains.",
+		desc: "Trainable train-track tracker: a tracker which tracks trains on train tracks and trains to track tracks which trains use.",
 		author: "The authors of t4",
 		date: "2022",
 		license: [
@@ -38,7 +38,7 @@ class Main {
 		{
 			dest: "machine",
 			desc: "The type of machine this computer represents",
-			type: ToString(null, ["yard", "server"]),
+			type: ToString(null, ["display", "server", "signal", "yard"]),
 			trigger: {
 				metavar: "machine",
 			},
@@ -92,9 +92,12 @@ class Main {
 		var args = Sys.args();
 		var fmtdArgs = args.map((s) -> '"$s"').join(", ");
 
-		var hook = [
-			'shell.run("t4", $fmtdArgs)',
-		].join("\n");
+		var hook = [];
+
+		if (setAutoStart)
+			hook.push('shell.run("t4", $fmtdArgs)');
+
+		var hook = hook.join("\n");
 
 		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
 		f.write(hook);
@@ -103,11 +106,5 @@ class Main {
 
 	private static function execMachine(machine: String, machine_args: Array<String>) {
 		trace(machine, machine_args);
-	}
-
-	static function setAutoStart(command:String) {
-		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
-		f.write('shell.run("t4", "$command")');
-		f.close();
 	}
 }

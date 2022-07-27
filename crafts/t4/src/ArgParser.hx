@@ -569,6 +569,9 @@ class ArgParser {
 			}
 		}
 
+		if (help.length > 1)
+			help.push("");
+
 		Lua.print(help.join("\n"));
 	}
 
@@ -589,8 +592,5 @@ class ArgParser {
 
 		if (problem != null)
 			Lua.print('For more information, try the ${spec.helpOption.trigger.long} flag.');
-	}
-
-	private function sortParameters() {
 	}
 }
