@@ -3,10 +3,16 @@ import argparse.ProgSpec;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
 import cc.Vector;
+import display.Display;
 import haxe.extern.Rest;
 import lua.Lua;
 import lua.Table;
 import model.Signal;
+import server.Server;
+import signal.Signal;
+import yard.Yard;
+
+import packet.Packet;
 
 enum Result {
 	Ok;
@@ -86,6 +92,8 @@ class Main {
 		configureStartup(args.setAutoStart);
 
 		execMachine(args.machine, args.machine_args);
+
+		trace("Good night");
 	}
 
 	private static function configureStartup(setAutoStart: Bool) {
@@ -104,7 +112,18 @@ class Main {
 		f.close();
 	}
 
-	private static function execMachine(machine: String, machine_args: Array<String>) {
-		trace(machine, machine_args);
+	private static function execMachine(machine: Machine, machine_args: Array<String>) {
+		switch(machine) {
+			case Display:
+				Display.main(machine_args);
+			case Signal:
+				Signal.main(machine_args);
+			case Server:
+				Server.main(machine_args);
+			case Yard:
+				Yard.main(machine_args);
+			default:
+				trace("Er, you shouldn't be able to see this...");
+		}
 	}
 }

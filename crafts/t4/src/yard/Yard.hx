@@ -7,7 +7,9 @@ class Yard {
 		trace("I am a yard.");
 
 		while (true) {
-			var event = OS.pullEvent();
+			var event = OS.pullEventRaw();
+			if (event[1] == "terminate")
+				break;
 		}
 	}
 }

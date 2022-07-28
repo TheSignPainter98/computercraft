@@ -7,7 +7,9 @@ class Server {
 		trace("I am a server.");
 
 		while (true) {
-			var event = OS.pullEvent();
+			var event = OS.pullEventRaw();
+			if (event[1] == "terminate")
+				break;
 		}
 	}
 }

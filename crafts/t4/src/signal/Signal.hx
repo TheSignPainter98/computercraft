@@ -7,7 +7,9 @@ class Signal {
 		trace("I am a signal.");
 
 		while (true) {
-			var event = OS.pullEvent();
+			var event = OS.pullEventRaw();
+			if (event[1] == "terminate")
+				break;
 		}
 	}
 }

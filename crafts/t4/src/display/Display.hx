@@ -7,7 +7,9 @@ class Display {
 		trace("I am a display.");
 
 		while (true) {
-			var event = OS.pullEvent();
+			var event = OS.pullEventRaw();
+			if (event[1] == "terminate")
+				break;
 		}
 	}
 }
