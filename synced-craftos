@@ -4,7 +4,11 @@ set -e
 
 usage() {
 	cat >&2 << EOF
-Usage: $0 FILE [ID]
+Usage: $0 [-u] FILE [ID]
+
+OPTIONS:
+
+-u		Compile, upload and quit
 
 MANDATORY ARGUMENTS:
 
@@ -24,6 +28,12 @@ CRAFTOS_PATH
 		to be ~/.local/share/craftos-pc
 EOF
 }
+
+upload_only=0
+if [[ "$1" == "-u" ]]; then
+	upload_only=1
+	shift
+fi
 
 # Parse args
 if [[ $# -gt 2 ]]; then
@@ -67,6 +77,15 @@ do_upload() {
 	echo -en "$initial${date_hash::$date_hash_width}\r"
 }
 
+build() {
+	haxe build.hxml || rm -f $artifact_basename
+}
+
+if [[ $upload_only -ne 0 ]]; then
+	build && do_upload $artifact
+	exit
+fi
+
 md5sum_deps() {
 	md5sum $(find $(dirname $1) -name '*.hx' | sort)
 }
@@ -83,7 +102,7 @@ cd $dir
 export -f md5sum_deps
 export -f do_upload
 while true; do
-	haxe build.hxml || rm -f $artifact_basename
+	build
 	if [[ -f "$artifact_basename" ]]; then
 		do_upload $artifact_basename
 	fi
