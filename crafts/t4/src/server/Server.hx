@@ -1,15 +1,18 @@
 package server;
 
 import cc.OS;
+import config.Config;
 
 class Server {
-	public static function main(args: Array<String>) {
+	public static function main(args: Array<String>, settings: Config) {
 		trace("I am a server.");
 
 		while (true) {
 			var event = OS.pullEventRaw();
 			if (event[1] == "terminate")
 				break;
+			else if (event[1] == ConfigImpl.SAVE_INVALIDATED_EVENT)
+				settings.save();
 		}
 	}
 }

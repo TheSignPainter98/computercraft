@@ -11,6 +11,7 @@ import model.Signal;
 import server.Server;
 import signal.Signal;
 import yard.Yard;
+import config.Config;
 
 import packet.Packet;
 
@@ -89,39 +90,44 @@ class Main {
 			return;
 		}
 
-		configureStartup(args.setAutoStart);
+		if (args.setAutoStart)
+			configureStartup();
+		else
+			deconfigureStartup();
 
-		execMachine(args.machine, args.machine_args);
+		var config = new Config(args.machine);
+
+		execMachine(args.machine, args.machine_args, config);
 
 		trace("Good night");
+
+		config.save(); // Just in case
 	}
 
-	private static function configureStartup(setAutoStart: Bool) {
+	private static function configureStartup() {
 		var args = Sys.args();
 		var fmtdArgs = args.map((s) -> '"$s"').join(", ");
-
-		var hook = [];
-
-		if (setAutoStart)
-			hook.push('shell.run("t4", $fmtdArgs)');
-
-		var hook = hook.join("\n");
+		var hook = 'shell.run("t4", $fmtdArgs)';
 
 		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
 		f.write(hook);
 		f.close();
 	}
 
-	private static function execMachine(machine: Machine, machine_args: Array<String>) {
+	private static function deconfigureStartup() {
+		FileSystem.delete("./startup.lua");
+	}
+
+	private static function execMachine(machine: Machine, machine_args: Array<String>, settings: Config) {
 		switch(machine) {
 			case Display:
-				Display.main(machine_args);
+				Display.main(machine_args, settings);
 			case Signal:
-				Signal.main(machine_args);
+				Signal.main(machine_args, settings);
 			case Server:
-				Server.main(machine_args);
+				Server.main(machine_args, settings);
 			case Yard:
-				Yard.main(machine_args);
+				Yard.main(machine_args, settings);
 			default:
 				trace("Er, you shouldn't be able to see this...");
 		}
