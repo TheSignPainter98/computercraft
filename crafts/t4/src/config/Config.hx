@@ -14,8 +14,8 @@ class ConfigImpl {
 	var synced_with_disk: Bool;
 	var data: Map<String, Dynamic>;
 
-	public function new(machine: Machine) {
-		config_file_name = './state-$machine.bin';
+	public function new(name: String) {
+		config_file_name = './state-$name.bin';
 		data = load(config_file_name);
 	}
 
@@ -38,7 +38,7 @@ class ConfigImpl {
 		return unserialiser.unserialize();
 	}
 
-	public function save(?force: Bool) {
+	public function save(?force: Bool=false) {
 		if (!force && synced_with_disk)
 			return;
 
@@ -53,12 +53,12 @@ class ConfigImpl {
 		synced_with_disk = true;
 	}
 
-	public function get<T>(key: Accessor<T>): Null<T>
+	public inline function get<T>(key: Accessor<T>): Null<T>
 		return data[key];
 
-	public function set<T>(key: Accessor<T>, value: T) {
+	public inline function set<T>(key: Accessor<T>, value: T) {
 		data[key] = value;
-		save();
+		invalidate();
 	}
 
 	public function set_default<T>(key: Accessor<T>, defaultValue: T)
@@ -68,6 +68,8 @@ class ConfigImpl {
 
 @:forward
 abstract Config(ConfigImpl) from ConfigImpl to ConfigImpl {
+	public static final shared: Config = new Config("SHARED");
+
 	public inline function new(machine: Machine)
 		this = new ConfigImpl(machine);
 
@@ -76,4 +78,10 @@ abstract Config(ConfigImpl) from ConfigImpl to ConfigImpl {
 
 	@:op([]) public inline function set<T>(key: Accessor<T>, value: T)
 		return this.set(key, value);
+
+	public inline function save(?force: Bool=false) {
+		this.save();
+		if (this != shared)
+			shared.save();
+	}
 }
