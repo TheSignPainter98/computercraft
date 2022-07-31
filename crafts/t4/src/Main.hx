@@ -41,7 +41,7 @@ class Main {
 			{
 				dest: "machine",
 				desc: "The type of machine this computer represents",
-				type: ToString(null, ["display", "server", "signal", "yard"]),
+				type: String(null, ["display", "server", "signal", "yard"]),
 				trigger: {
 					metavar: "machine",
 				},
@@ -49,7 +49,7 @@ class Main {
 			{
 				dest: "machine_args",
 				desc: "The arguments to pass to the machine",
-				type: ToList(ToString(null, null)),
+				type: List(String(null, null)),
 				trigger: {
 					metavar: "args",
 					howMany: AtLeast(0),
@@ -60,7 +60,7 @@ class Main {
 			{
 				dest: "setAutoStart",
 				desc: "Don't use the arguments supplied this invokation in subsequent startups",
-				type: ToFlag(false),
+				type: Flag(false),
 				trigger: {
 					short: "-n",
 					long: "--no-autostart",
@@ -69,7 +69,7 @@ class Main {
 			{
 				dest: "verbose",
 				desc: "Output verbosely",
-				type: ToFlag(true),
+				type: Flag(true),
 				trigger: {
 					short: "-v",
 					long: "--verbose",

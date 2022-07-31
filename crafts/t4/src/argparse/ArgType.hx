@@ -1,9 +1,9 @@
 package argparse;
 
 enum ArgType {
-	ToFlag(store: Bool);
-	ToString(dflt: Null<String>, choices: Null<Array<String>>);
-	ToInt(dflt: Null<Int>, choices: Null<Array<Int>>);
-	ToFloat(dflt: Null<Float>, choices: Null<Array<Float>>);
-	ToList(type: ArgType);
+	Flag(store: Bool);
+	String(dflt: Null<String>, choices: Null<Array<String>>);
+	Int(dflt: Null<Int>, choices: Null<Array<Int>>);
+	Float(dflt: Null<Float>, choices: Null<Array<Float>>);
+	List(type: ArgType);
 }

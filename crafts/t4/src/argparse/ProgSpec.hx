@@ -10,7 +10,7 @@ class ProgSpec {
 	public var helpOption: ArgSpec<Option> = {
 		dest: HELP_DEST,
 		desc: "Show this help and exit",
-		type: ToFlag(true),
+		type: Flag(true),
 		trigger: {
 			short: "-h",
 			long: "--help",
@@ -19,7 +19,7 @@ class ProgSpec {
 	public var licenseOption: ArgSpec<Option> = {
 		dest: LICENSE_DEST,
 		desc: "Show license and exit",
-		type: ToFlag(true),
+		type: Flag(true),
 		trigger: {
 			short: "-l",
 			long: "--license",
@@ -28,7 +28,7 @@ class ProgSpec {
 	public var versionOption: ArgSpec<Option> = {
 		dest: VERSION_DEST,
 		desc: "Outout version information and exit",
-		type: ToFlag(true),
+		type: Flag(true),
 		trigger: {
 			short: "-V",
 			long: "--version",

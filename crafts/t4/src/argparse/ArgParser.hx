@@ -99,7 +99,7 @@ class ArgParser {
 							var optSpec = optionMap[arg];
 							if (optSpec != null) {
 								switch (optSpec.type) {
-									case ToFlag(f):
+									case Flag(f):
 										toks.push({dest: optSpec.dest, arg: Flag(f)});
 									default:
 										parserState = CaptureOption(arg, optSpec);
@@ -114,7 +114,7 @@ class ArgParser {
 								var optSpec = optionMap[dekebabedArg];
 								if (optSpec != null)
 									switch (optSpec.type) {
-										case ToFlag(f):
+										case Flag(f):
 											toks.push({dest: optSpec.dest, arg: Flag(f)});
 										default:
 											if (i < arg.length - 1)
@@ -212,14 +212,14 @@ class ArgParser {
 		for (spec in specs) {
 			var val = args[spec.dest];
 			switch (spec.type) {
-				case ToString(_, null) | ToInt(_, null) | ToFloat(_, null):
-				case ToString(_, choices):
+				case String(_, null) | Int(_, null) | Float(_, null):
+				case String(_, choices):
 					var arg = args[spec.dest];
 					if (arg == null)
 						continue;
 
 					checkChoiceSpec(spec, cast args[spec.dest], choices, problems);
-				case ToInt(_, choices):
+				case Int(_, choices):
 					var arg = args[spec.dest];
 					if (arg == null)
 						continue;
@@ -232,7 +232,7 @@ class ArgParser {
 					args[spec.dest] = Arg.Int(i);
 
 					checkChoiceSpec(spec, i, choices, problems);
-				case ToFloat(_, choices):
+				case Float(_, choices):
 					var arg = args[spec.dest];
 					if (arg == null)
 						continue;

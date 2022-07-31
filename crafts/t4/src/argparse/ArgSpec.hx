@@ -21,11 +21,11 @@ class ArgSpec<T:ArgSpecTrigger> {
 
 	public function mandatory(): Bool {
 		return switch (type) {
-			case ToFlag(_): false;
-			case ToString(s, _): s == null;
-			case ToInt(i, _): i == null;
-			case ToFloat(f, _): f == null;
-			case ToList(_): false;
+			case Flag(_): false;
+			case String(s, _): s == null;
+			case Int(i, _): i == null;
+			case Float(f, _): f == null;
+			case List(_): false;
 		}
 	}
 
@@ -35,11 +35,11 @@ class ArgSpec<T:ArgSpecTrigger> {
 
 	public inline function getDefault(): Null<Arg> {
 		return return switch (type) {
-			case ToFlag(b): Flag(!b);
-			case ToString(s, _): String(s);
-			case ToInt(i, _): Int(i);
-			case ToFloat(f, _): Float(f);
-			case ToList(_): List([]);
+			case Flag(b): Flag(!b);
+			case String(s, _): String(s);
+			case Int(i, _): Int(i);
+			case Float(f, _): Float(f);
+			case List(_): List([]);
 		}
 	}
 
@@ -52,10 +52,10 @@ class ArgSpec<T:ArgSpecTrigger> {
 
 	public static function choicesSignature(type: ArgType): Null<String> {
 		var choices: Array<Any> = switch (type) {
-			case ToFlag(_) | ToString(_, null) | ToInt(_, null) | ToFloat(_, null): [];
-			case ToString(_, choices): choices;
-			case ToInt(_, choices): choices;
-			case ToFloat(_, choices): choices;
+			case Flag(_) | String(_, null) | Int(_, null) | Float(_, null): [];
+			case String(_, choices): choices;
+			case Int(_, choices): choices;
+			case Float(_, choices): choices;
 			default: [];
 		}
 
