@@ -38,7 +38,7 @@ class ConfigImpl {
 		return unserialiser.unserialize();
 	}
 
-	public function save(?force: Bool=false) {
+	public function save(?force: Bool = false) {
 		if (!force && synced_with_disk)
 			return;
 
@@ -79,7 +79,7 @@ abstract Config(ConfigImpl) from ConfigImpl to ConfigImpl {
 	@:op([]) public inline function set<T>(key: Accessor<T>, value: T)
 		return this.set(key, value);
 
-	public inline function save(?force: Bool=false) {
+	public inline function save(?force: Bool = false) {
 		this.save();
 		if (this != shared)
 			shared.save();

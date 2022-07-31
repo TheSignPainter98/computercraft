@@ -14,7 +14,7 @@ abstract Machine(String) from String to String {
 	var MachineYard = 'yard';
 
 	public inline function exec(args: Array<String>, settings: Config) {
-		switch(this) {
+		switch (this) {
 			case MachineDisplay:
 				Display.main(args, settings);
 			case MachineSignal:
