@@ -62,7 +62,7 @@ class Main {
 		options: [
 		{
 			dest: "setAutoStart",
-			desc: "Disable writing the current arguments into /startup.lua",
+			desc: "Don't use the arguments supplied this invokation in subsequent startups",
 			type: ToFlag(false),
 			trigger: {
 				short: "-n",
