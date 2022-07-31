@@ -3,14 +3,10 @@ import argparse.ProgSpec;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
 import cc.Vector;
-import display.Display;
 import haxe.extern.Rest;
 import lua.Lua;
 import lua.Table;
 import model.Signal;
-import server.Server;
-import signal.Signal;
-import yard.Yard;
 import config.Config;
 
 import packet.Packet;
@@ -97,7 +93,7 @@ class Main {
 
 		var config = new Config(args.machine);
 
-		args.machine.main(args.machine_args, config);
+		args.machine.exec(args.machine_args, config);
 
 		trace("Good night");
 
