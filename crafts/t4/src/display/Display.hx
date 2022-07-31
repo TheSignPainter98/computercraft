@@ -4,7 +4,7 @@ import cc.OS;
 import config.Config;
 
 class Display {
-	public static function main(args: Array<String>, settings: Config) {
+	public static function main(args:Array<String>, settings:Config) {
 		trace("I am a display.");
 
 		while (true) {
