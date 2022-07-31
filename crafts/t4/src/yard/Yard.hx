@@ -2,7 +2,6 @@ package yard;
 
 import cc.OS;
 import config.Config;
-import config.Accessor;
 
 class Yard {
 	public static function main(args: Array<String>, settings: Config) {
