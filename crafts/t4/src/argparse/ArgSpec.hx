@@ -1,6 +1,7 @@
 package argparse;
 
-@:structInit class ArgSpec<T:ArgSpecTrigger> {
+@:structInit
+class ArgSpec<T:ArgSpecTrigger> {
 	public var dest: String;
 	public var desc: Null<String> = null;
 	public var trigger: T;

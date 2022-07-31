@@ -1,6 +1,7 @@
 package argparse;
 
-@:structInit class ProgSpec {
+@:structInit
+class ProgSpec {
 	public static final HELP_DEST = "@:HeLp_DeSt";
 	public static final LICENSE_DEST = "@:LiCeNsE_dEsT";
 	public static final VERSION_DEST = "@:VeRsIoN_dEsT!";

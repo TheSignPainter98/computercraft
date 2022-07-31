@@ -73,10 +73,12 @@ abstract Config(ConfigImpl) from ConfigImpl to ConfigImpl {
 	public inline function new(machine: Machine)
 		this = new ConfigImpl(machine);
 
-	@:op([]) public inline function get<T>(key: Accessor<T>): Null<T>
+	@:op([])
+	public inline function get<T>(key: Accessor<T>): Null<T>
 		return this.get(key);
 
-	@:op([]) public inline function set<T>(key: Accessor<T>, value: T)
+	@:op([])
+	public inline function set<T>(key: Accessor<T>, value: T)
 		return this.set(key, value);
 
 	public inline function save(?force: Bool = false) {

@@ -5,7 +5,8 @@ import lua.NativeStringTools;
 
 using StringTools;
 
-@:structInit class Token {
+@:structInit
+class Token {
 	public var dest: String;
 	public var arg: Arg;
 }
