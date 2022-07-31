@@ -261,7 +261,7 @@
 		"tryPolicy": "after",
 		"typeCheckColonPolicy": "around",
 		"typeExtensionPolicy": "after",
-		"typeHintColonPolicy": "none",
+		"typeHintColonPolicy": "after",
 		"typeParamClosePolicy": "none",
 		"typeParamOpenPolicy": "none",
 		"whilePolicy": "after"

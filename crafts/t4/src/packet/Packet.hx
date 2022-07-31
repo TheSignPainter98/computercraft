@@ -3,19 +3,19 @@ package packet;
 import model.SignalState;
 
 enum SignalToServerPacket {
-	Register(connected:Array<Int>);
-	State(id:Int, signal:SignalState);
-	TrainPassthrough(id:Int, trainId:Int);
+	Register(connected: Array<Int>);
+	State(id: Int, signal: SignalState);
+	TrainPassthrough(id: Int, trainId: Int);
 }
 
 enum YardToServerPacket {
-	RegisterTrain(name:String);
+	RegisterTrain(name: String);
 }
 
 enum ServerToSignalPacket {
-	RegisteredSignal(id:Int);
+	RegisteredSignal(id: Int);
 }
 
 enum ServerToYardPacket {
-	RegisteredTrain(id:Int);
+	RegisteredTrain(id: Int);
 }

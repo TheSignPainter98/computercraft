@@ -9,7 +9,7 @@ abstract Machine(String) from String to String {
 	var Server = 'server';
 	var Yard = 'yard';
 
-	public inline function main(args:Array<String>, settings:Config) {
+	public inline function main(args: Array<String>, settings: Config) {
 		trace('I am a $this');
 		switch (this) {
 			case Display:

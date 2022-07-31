@@ -6,30 +6,31 @@ import lua.NativeStringTools;
 using StringTools;
 
 @:structInit class Token {
-	public var dest:String;
-	public var arg:Arg;
+	public var dest: String;
+	public var arg: Arg;
 }
 
 enum ParserState {
 	Capture;
-	CaptureOption(src:String, opt:ArgSpec<Option>);
-	CapturePositionalList(dest:String, list:Array<String>);
+	CaptureOption(src: String, opt: ArgSpec<Option>);
+	CapturePositionalList(dest: String, list: Array<String>);
 }
 
 class ArgParser {
-	private var spec:ProgSpec;
-	private var optionMap:Map<String, ArgSpec<Option>>;
+	private var spec: ProgSpec;
+	private var optionMap: Map<String, ArgSpec<Option>>;
 
-	public function new(spec:ProgSpec) {
+	public function new(spec: ProgSpec) {
 		this.spec = spec;
 		spec.options = [spec.helpOption, spec.licenseOption, spec.versionOption].concat(spec.options);
 		this.optionMap = [
 			for (o in spec.options)
-				for (trigger in [o.trigger.short, o.trigger.long]) trigger => o
+				for (trigger in [o.trigger.short, o.trigger.long])
+					trigger => o
 		];
 	}
 
-	public function parse(args:Array<String>):Null<Args> {
+	public function parse(args: Array<String>): Null<Args> {
 		var toks = tokenise(args);
 		if (toks == null)
 			return null;
@@ -37,20 +38,20 @@ class ArgParser {
 		return parseToks(toks);
 	}
 
-	private function tokenise(raw_args:Array<String>):Null<Array<Token>> {
+	private function tokenise(raw_args: Array<String>): Null<Array<Token>> {
 		if (raw_args.length == 0)
 			return [];
 
 		var parserState = Capture;
 		var positionalIterator = spec.positionals.iterator();
-		var toks:Array<Token> = [];
+		var toks: Array<Token> = [];
 
-		var arg:String;
+		var arg: String;
 		while ((arg = raw_args.shift()) != null) {
 			switch (parserState) {
 				case Capture:
 					if (arg == "--") {
-						var positional:Null<ArgSpec<Positional>> = null;
+						var positional: Null<ArgSpec<Positional>> = null;
 						while (positionalIterator.hasNext() && raw_args.length != 0) {
 							positional = positionalIterator.next();
 							switch (positional.trigger.howMany) {
@@ -169,8 +170,8 @@ class ArgParser {
 		return toks;
 	}
 
-	private function parseToks(toks:Array<Token>):Null<Args> {
-		var args:Args = new Map();
+	private function parseToks(toks: Array<Token>): Null<Args> {
+		var args: Args = new Map();
 
 		// Defaults
 		insertDefaultsInto(args, spec.positionals);
@@ -192,7 +193,7 @@ class ArgParser {
 		return args;
 	}
 
-	private function insertDefaultsInto<T:ArgSpecTrigger>(args:Args, specs:Array<ArgSpec<T>>) {
+	private function insertDefaultsInto<T: ArgSpecTrigger>(args: Args, specs: Array<ArgSpec<T>>) {
 		for (spec in specs) {
 			var dflt = spec.getDefault();
 			if (dflt != null)
@@ -200,11 +201,11 @@ class ArgParser {
 		}
 	}
 
-	private function checkChoices(args:Args):Array<String> {
+	private function checkChoices(args: Args): Array<String> {
 		return checkChoicesOf(spec.options, args).concat(checkChoicesOf(spec.positionals, args));
 	}
 
-	private function checkChoicesOf<T:ArgSpecTrigger>(specs:Array<ArgSpec<T>>, args:Args):Array<String> {
+	private function checkChoicesOf<T: ArgSpecTrigger>(specs: Array<ArgSpec<T>>, args: Args): Array<String> {
 		var problems = [];
 
 		for (spec in specs) {
@@ -250,13 +251,13 @@ class ArgParser {
 		return problems;
 	}
 
-	private function checkChoiceSpec<T:ArgSpecTrigger, S>(spec:ArgSpec<T>, val:Null<S>, choices:Array<S>, problems:Array<String>) {
+	private function checkChoiceSpec<T: ArgSpecTrigger, S>(spec: ArgSpec<T>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
 		if (choices.indexOf(val) == -1)
 			problems.push('Option "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
 	}
 
-	private function checkMandatoryArgs(args:Args):Array<String> {
-		var problems:Array<String> = [];
+	private function checkMandatoryArgs(args: Args): Array<String> {
+		var problems: Array<String> = [];
 
 		for (option in spec.options)
 			if (option.mandatory() && args[option.dest] == null)
@@ -275,7 +276,7 @@ class ArgParser {
 		return problems;
 	}
 
-	private function handleSpecialArgs(args:Args):Bool {
+	private function handleSpecialArgs(args: Args): Bool {
 		if (args[ProgSpec.HELP_DEST] == true) {
 			showHelp();
 			return false;
@@ -294,7 +295,7 @@ class ArgParser {
 		return true;
 	}
 
-	private function removeSpecialArgs(args:Args) {
+	private function removeSpecialArgs(args: Args) {
 		args.remove(ProgSpec.HELP_DEST);
 		args.remove(ProgSpec.LICENSE_DEST);
 		args.remove(ProgSpec.VERSION_DEST);
@@ -355,7 +356,7 @@ class ArgParser {
 		Lua.print(help.join("\n"));
 	}
 
-	private function showUsage(?problem:String) {
+	private function showUsage(?problem: String) {
 		var usageParts = ["usage:", spec.name];
 
 		spec.options.sort((o1, o2) -> o1.compare(o2));

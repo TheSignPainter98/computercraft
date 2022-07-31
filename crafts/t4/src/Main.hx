@@ -16,11 +16,11 @@ import packet.Packet;
 
 enum Result {
 	Ok;
-	Err(err:String);
+	Err(err: String);
 }
 
 class Main {
-	private static var cliSpec:ProgSpec = {
+	private static var cliSpec: ProgSpec = {
 		name: "t4",
 		shortDesc: "Trainable train-track tracker",
 		desc: "Trainable train-track tracker: a tracker which tracks trains on train tracks and trains to track tracks which trains use.",
