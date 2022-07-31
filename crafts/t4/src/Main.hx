@@ -97,7 +97,7 @@ class Main {
 
 		var config = new Config(args.machine);
 
-		execMachine(args.machine, args.machine_args, config);
+		args.machine.main(args.machine_args, config);
 
 		trace("Good night");
 
@@ -116,20 +116,5 @@ class Main {
 
 	private static function deconfigureStartup() {
 		FileSystem.delete("./startup.lua");
-	}
-
-	private static function execMachine(machine: Machine, machine_args: Array<String>, settings: Config) {
-		switch(machine) {
-			case Display:
-				Display.main(machine_args, settings);
-			case Signal:
-				Signal.main(machine_args, settings);
-			case Server:
-				Server.main(machine_args, settings);
-			case Yard:
-				Yard.main(machine_args, settings);
-			default:
-				trace("Er, you shouldn't be able to see this...");
-		}
 	}
 }

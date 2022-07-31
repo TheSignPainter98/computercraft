@@ -1,11 +1,11 @@
 package config;
 
-import Machine;
 import cc.OS;
 import cc.Settings;
 import cc.FileSystem;
 import haxe.Serializer;
 import haxe.Unserializer;
+import machine.Machine;
 
 class ConfigImpl {
 	public static final SAVE_INVALIDATED_EVENT = "save-invalidated";
