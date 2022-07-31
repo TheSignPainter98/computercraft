@@ -6,6 +6,7 @@ import cc.Vector;
 import haxe.extern.Rest;
 import lua.Lua;
 import lua.Table;
+import machine.Machine;
 import model.Signal;
 import config.Config;
 
@@ -93,7 +94,8 @@ class Main {
 
 		var config = new Config(args.machine);
 
-		args.machine.exec(args.machine_args, config);
+		final machine: Machine = args.machine;
+		machine.exec(args.machine_args, config);
 
 		trace("Good night");
 
