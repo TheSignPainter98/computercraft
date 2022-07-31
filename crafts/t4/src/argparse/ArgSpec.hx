@@ -1,6 +1,7 @@
 package argparse;
 
-@:structInit class ArgSpec<T:ArgSpecTrigger> {
+@:structInit
+class ArgSpec<T:ArgSpecTrigger> {
 	public var dest: String;
 	public var desc: Null<String> = null;
 	public var trigger: T;
@@ -33,14 +34,13 @@ package argparse;
 	}
 
 	public inline function getDefault(): Null<Arg> {
-		return
-			return switch (type) {
-				case ToFlag(b): Flag(!b);
-				case ToString(s, _): String(s);
-				case ToInt(i, _): Int(i);
-				case ToFloat(f, _): Float(f);
-				case ToList(_): List([]);
-			}
+		return return switch (type) {
+			case ToFlag(b): Flag(!b);
+			case ToString(s, _): String(s);
+			case ToInt(i, _): Int(i);
+			case ToFloat(f, _): Float(f);
+			case ToList(_): List([]);
+		}
 	}
 
 	public inline function signature(): String {
@@ -51,7 +51,7 @@ package argparse;
 	}
 
 	public static function choicesSignature(type: ArgType): Null<String> {
-		var choices: Array<Any> = switch(type) {
+		var choices: Array<Any> = switch (type) {
 			case ToFlag(_) | ToString(_, null) | ToInt(_, null) | ToFloat(_, null): [];
 			case ToString(_, choices): choices;
 			case ToInt(_, choices): choices;

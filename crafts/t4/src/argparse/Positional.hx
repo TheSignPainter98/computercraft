@@ -1,6 +1,7 @@
 package argparse;
 
-@:structInit class Positional implements ArgSpecTrigger {
+@:structInit
+class Positional implements ArgSpecTrigger {
 	public var metavar: Null<String>;
 	public var howMany: ListCount = Exactly(1);
 

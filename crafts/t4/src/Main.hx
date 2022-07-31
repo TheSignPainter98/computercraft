@@ -9,7 +9,6 @@ import lua.Table;
 import machine.Machine;
 import model.Signal;
 import config.Config;
-
 import packet.Packet;
 
 enum Result {
@@ -39,41 +38,43 @@ class Main {
 			"along with this program.  If not, see <https://www.gnu.org/licenses/>.",
 		],
 		positionals: [
-		{
-			dest: "machine",
-			desc: "The type of machine this computer represents",
-			type: ToString(null, ["display", "server", "signal", "yard"]),
-			trigger: {
-				metavar: "machine",
+			{
+				dest: "machine",
+				desc: "The type of machine this computer represents",
+				type: ToString(null, ["display", "server", "signal", "yard"]),
+				trigger: {
+					metavar: "machine",
+				},
 			},
-		}, {
-			dest: "machine_args",
-			desc: "The arguments to pass to the machine",
-			type: ToList(ToString(null, null)),
-			trigger: {
-				metavar: "args",
-				howMany: AtLeast(0),
-			},
-		}
+			{
+				dest: "machine_args",
+				desc: "The arguments to pass to the machine",
+				type: ToList(ToString(null, null)),
+				trigger: {
+					metavar: "args",
+					howMany: AtLeast(0),
+				},
+			}
 		],
 		options: [
-		{
-			dest: "setAutoStart",
-			desc: "Don't use the arguments supplied this invokation in subsequent startups",
-			type: ToFlag(false),
-			trigger: {
-				short: "-n",
-				long: "--no-autostart",
+			{
+				dest: "setAutoStart",
+				desc: "Don't use the arguments supplied this invokation in subsequent startups",
+				type: ToFlag(false),
+				trigger: {
+					short: "-n",
+					long: "--no-autostart",
+				},
 			},
-		}, {
-			dest: "verbose",
-			desc: "Output verbosely",
-			type: ToFlag(true),
-			trigger: {
-				short: "-v",
-				long: "--verbose",
-			},
-		}
+			{
+				dest: "verbose",
+				desc: "Output verbosely",
+				type: ToFlag(true),
+				trigger: {
+					short: "-v",
+					long: "--verbose",
+				},
+			}
 		],
 	};
 

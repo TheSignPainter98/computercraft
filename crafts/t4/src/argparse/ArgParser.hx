@@ -2,9 +2,11 @@ package argparse;
 
 import lua.Lua;
 import lua.NativeStringTools;
+
 using StringTools;
 
-@:structInit class Token {
+@:structInit
+class Token {
 	public var dest: String;
 	public var arg: Arg;
 }
@@ -21,8 +23,12 @@ class ArgParser {
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
-		spec.options = [ spec.helpOption, spec.licenseOption, spec.versionOption ].concat(spec.options);
-		this.optionMap = [ for (o in spec.options) for (trigger in [o.trigger.short, o.trigger.long]) trigger => o ];
+		spec.options = [spec.helpOption, spec.licenseOption, spec.versionOption].concat(spec.options);
+		this.optionMap = [
+			for (o in spec.options)
+				for (trigger in [o.trigger.short, o.trigger.long])
+					trigger => o
+		];
 	}
 
 	public function parse(args: Array<String>): Null<Args> {
@@ -166,7 +172,7 @@ class ArgParser {
 	}
 
 	private function parseToks(toks: Array<Token>): Null<Args> {
-		var args:Args = new Map();
+		var args: Args = new Map();
 
 		// Defaults
 		insertDefaultsInto(args, spec.positionals);
@@ -188,7 +194,7 @@ class ArgParser {
 		return args;
 	}
 
-	private function insertDefaultsInto<T:ArgSpecTrigger>(args: Args, specs: Array<ArgSpec<T>>) {
+	private function insertDefaultsInto<T: ArgSpecTrigger>(args: Args, specs: Array<ArgSpec<T>>) {
 		for (spec in specs) {
 			var dflt = spec.getDefault();
 			if (dflt != null)
@@ -200,7 +206,7 @@ class ArgParser {
 		return checkChoicesOf(spec.options, args).concat(checkChoicesOf(spec.positionals, args));
 	}
 
-	private function checkChoicesOf<T:ArgSpecTrigger>(specs: Array<ArgSpec<T>>, args: Args): Array<String> {
+	private function checkChoicesOf<T: ArgSpecTrigger>(specs: Array<ArgSpec<T>>, args: Args): Array<String> {
 		var problems = [];
 
 		for (spec in specs) {
@@ -246,7 +252,7 @@ class ArgParser {
 		return problems;
 	}
 
-	private function checkChoiceSpec<T:ArgSpecTrigger, S>(spec: ArgSpec<T>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
+	private function checkChoiceSpec<T: ArgSpecTrigger, S>(spec: ArgSpec<T>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
 		if (choices.indexOf(val) == -1)
 			problems.push('Option "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
 	}
@@ -258,7 +264,7 @@ class ArgParser {
 			if (option.mandatory() && args[option.dest] == null)
 				problems.push('Missing mandatory flag: ${option.name()}');
 
-		for (positional in spec.positionals){
+		for (positional in spec.positionals) {
 			if (positional.mandatory() && args[positional.dest] == null) {
 				switch (positional.trigger.howMany) {
 					case AtLeast(0):
