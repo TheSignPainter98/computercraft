@@ -9,6 +9,10 @@ class Flag implements ArgSpecTrigger {
 		return short;
 	}
 
+	public inline function longName(): String {
+		return '$short, $long';
+	}
+
 	public inline function signature(type: ArgType): String {
 		var sigParts = [name()];
 		var choicesSig = ArgSpec.choicesSignature(type);

@@ -15,8 +15,8 @@ class ArgSpec<T:ArgSpecTrigger, V> {
 	}
 
 	public function compare(other: ArgSpec<T, Dynamic>): Int {
-		var k1 = name();
-		var k2 = other.name();
+		var k1 = longName().toLowerCase();
+		var k2 = other.longName().toLowerCase();
 		if (k1 < k2) {
 			return -1;
 		} else if (k1 == k2) {
@@ -32,6 +32,10 @@ class ArgSpec<T:ArgSpecTrigger, V> {
 
 	public function name(): String {
 		return trigger.name();
+	}
+
+	public function longName(): String {
+		return trigger.longName();
 	}
 
 	public inline function getDefault(): Null<Dynamic> {

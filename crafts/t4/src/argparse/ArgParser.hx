@@ -238,7 +238,6 @@ class ArgParser {
 	private function showHelp() {
 		showUsage();
 
-		spec.positionals.sort((p1, p2) -> p1.compare(p2));
 		var help = [""];
 
 		help.push("DESCRIPTION");
@@ -247,7 +246,7 @@ class ArgParser {
 
 		if (spec.flags.length != 0) {
 			help.push("");
-			help.push("flagS");
+			help.push("OPTIONS");
 
 			for (flag in spec.flags) {
 				var choicesSig = ArgSpec.choicesSignature(flag.type);
