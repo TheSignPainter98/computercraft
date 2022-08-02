@@ -1,15 +1,22 @@
 package argparse;
 
 @:structInit
-class ArgSpec<T:ArgSpecTrigger> {
-	public var dest: String;
+class ArgSpec<T:ArgSpecTrigger, V> {
+	public var dest: ArgAccessor<V>;
 	public var desc: Null<String> = null;
 	public var trigger: T;
+	public var dflt: Null<V> = null;
 	public var type: ArgType;
+	public var parse(get, never): RawArgList->ParserFragmentResult<V>;
+	public var action: Null<RawArgList->ParserFragmentResult<V>> = null;
 
-	public function compare(other: ArgSpec<T>): Int {
-		var k1 = name();
-		var k2 = other.name();
+	public inline function get_parse(): RawArgList->ParserFragmentResult<V> {
+		return if (action != null) action; else type.defaultAction();
+	}
+
+	public function compare(other: ArgSpec<T, Dynamic>): Int {
+		var k1 = longName().toLowerCase();
+		var k2 = other.longName().toLowerCase();
 		if (k1 < k2) {
 			return -1;
 		} else if (k1 == k2) {
@@ -20,27 +27,46 @@ class ArgSpec<T:ArgSpecTrigger> {
 	}
 
 	public function mandatory(): Bool {
-		return switch (type) {
-			case ToFlag(_): false;
-			case ToString(s, _): s == null;
-			case ToInt(i, _): i == null;
-			case ToFloat(f, _): f == null;
-			case ToList(_): false;
-		}
+		return type != Flag && type != FalseFlag && dflt == null;
 	}
 
 	public function name(): String {
 		return trigger.name();
 	}
 
-	public inline function getDefault(): Null<Arg> {
-		return return switch (type) {
-			case ToFlag(b): Flag(!b);
-			case ToString(s, _): String(s);
-			case ToInt(i, _): Int(i);
-			case ToFloat(f, _): Float(f);
-			case ToList(_): List([]);
+	public function longName(): String {
+		return trigger.longName();
+	}
+
+	public inline function getDefault(): Null<Dynamic> {
+		if (dflt != null)
+			return dflt;
+		if (!mandatory())
+			return switch (type) {
+				case Flag: false;
+				case FalseFlag: true;
+				case String(_): "";
+				case Int(_): 0;
+				case Float(_): 0.0;
+				case List(_): [];
+			}
+		return null;
+	}
+
+	public function tokenise<T: ArgSpecTrigger, V>(args: RawArgList, toks: Array<Token<Dynamic>>, problems: Array<String>): RawArgList {
+		final parseFragmentResult = parse(args);
+
+		switch (parseFragmentResult.result) {
+			case Left(err):
+				problems.push(err);
+			case Right(v):
+				toks.push({
+					dest: dest,
+					arg: v,
+				});
 		}
+
+		return args.map((l) -> l.slice(parseFragmentResult.shift));
 	}
 
 	public inline function signature(): String {
@@ -52,10 +78,10 @@ class ArgSpec<T:ArgSpecTrigger> {
 
 	public static function choicesSignature(type: ArgType): Null<String> {
 		var choices: Array<Any> = switch (type) {
-			case ToFlag(_) | ToString(_, null) | ToInt(_, null) | ToFloat(_, null): [];
-			case ToString(_, choices): choices;
-			case ToInt(_, choices): choices;
-			case ToFloat(_, choices): choices;
+			case Flag | String(null) | Int(null) | Float(null): [];
+			case String(choices): choices;
+			case Int(choices): choices;
+			case Float(choices): choices;
 			default: [];
 		}
 

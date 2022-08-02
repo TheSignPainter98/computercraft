@@ -1,18 +1,16 @@
 package argparse;
 
 @:forward
-abstract Args(Map<String, Arg>) from Map<String, Arg> to Map<String, Arg> {
-	@:op([]) @:op(a.b)
-	inline function get<T>(key: String): T {
-		var val = this.get(key);
-		if (val == null)
-			throw new NoSuchArgumentException('No such argument "$key"');
-		return cast Type.enumParameters(val)[0];
+abstract Args(Map<Int, Dynamic>) from Map<Int, Dynamic> to Map<Int, Dynamic> {
+	public inline function new() {
+		this = new Map<Int, Dynamic>();
 	}
 
 	@:op([])
-	inline function set(key: String, val: Arg) {
-		this.set(key, val);
-		return val;
-	}
+	inline function get<T>(key: ArgAccessor<T>): Null<T>
+		return this[key];
+
+	@:op([])
+	inline function set<T>(key: ArgAccessor<T>, val: T)
+		this[key] = val;
 }

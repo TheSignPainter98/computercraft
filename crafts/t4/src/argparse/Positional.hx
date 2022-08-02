@@ -9,6 +9,10 @@ class Positional implements ArgSpecTrigger {
 		return metavar;
 	}
 
+	public inline function longName(): String {
+		return name();
+	}
+
 	public inline function signature(type: ArgType): String {
 		var content = ArgSpec.choicesSignature(type);
 		if (content == null)

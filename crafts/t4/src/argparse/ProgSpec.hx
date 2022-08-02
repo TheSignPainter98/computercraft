@@ -2,33 +2,33 @@ package argparse;
 
 @:structInit
 class ProgSpec {
-	public static final HELP_DEST = "@:HeLp_DeSt";
-	public static final LICENSE_DEST = "@:LiCeNsE_dEsT";
-	public static final VERSION_DEST = "@:VeRsIoN_dEsT!";
+	public static final HELP_DEST = new ArgAccessor<Bool>();
+	public static final LICENSE_DEST = new ArgAccessor<Bool>();
+	public static final VERSION_DEST = new ArgAccessor<Bool>();
 
 	public var name: String;
-	public var helpOption: ArgSpec<Option> = {
+	public var helpFlag: ArgSpec<Flag, Bool> = {
 		dest: HELP_DEST,
 		desc: "Show this help and exit",
-		type: ToFlag(true),
+		type: Flag,
 		trigger: {
 			short: "-h",
 			long: "--help",
 		},
 	};
-	public var licenseOption: ArgSpec<Option> = {
+	public var licenseFlag: ArgSpec<Flag, Bool> = {
 		dest: LICENSE_DEST,
 		desc: "Show license and exit",
-		type: ToFlag(true),
+		type: Flag,
 		trigger: {
 			short: "-l",
 			long: "--license",
 		},
 	};
-	public var versionOption: ArgSpec<Option> = {
+	public var versionFlag: ArgSpec<Flag, Bool> = {
 		dest: VERSION_DEST,
 		desc: "Outout version information and exit",
-		type: ToFlag(true),
+		type: Flag,
 		trigger: {
 			short: "-V",
 			long: "--version",
@@ -40,8 +40,8 @@ class ProgSpec {
 	public var author: String;
 	public var desc: Null<String>;
 	public var license: Null<Array<String>> = null;
-	public var options: Array<ArgSpec<Option>> = [];
-	public var positionals: Array<ArgSpec<Positional>> = [];
+	public var flags: Array<ArgSpec<Flag, Dynamic>> = [];
+	public var positionals: Array<ArgSpec<Positional, Dynamic>> = [];
 
 	public function signature(): String {
 		var maybeDesc = shortDesc != null ? " - " + shortDesc : "";
