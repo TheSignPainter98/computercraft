@@ -64,7 +64,7 @@ class Main {
 				},
 			}
 		],
-		options: [
+		flags: [
 			{
 				dest: SET_AUTO_START,
 				desc: "Don't use the arguments supplied this invokation in subsequent startups",

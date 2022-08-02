@@ -7,7 +7,7 @@ class ProgSpec {
 	public static final VERSION_DEST = new ArgAccessor<Bool>();
 
 	public var name: String;
-	public var helpOption: ArgSpec<Option, Bool> = {
+	public var helpFlag: ArgSpec<Flag, Bool> = {
 		dest: HELP_DEST,
 		desc: "Show this help and exit",
 		type: Flag,
@@ -16,7 +16,7 @@ class ProgSpec {
 			long: "--help",
 		},
 	};
-	public var licenseOption: ArgSpec<Option, Bool> = {
+	public var licenseFlag: ArgSpec<Flag, Bool> = {
 		dest: LICENSE_DEST,
 		desc: "Show license and exit",
 		type: Flag,
@@ -25,7 +25,7 @@ class ProgSpec {
 			long: "--license",
 		},
 	};
-	public var versionOption: ArgSpec<Option, Bool> = {
+	public var versionFlag: ArgSpec<Flag, Bool> = {
 		dest: VERSION_DEST,
 		desc: "Outout version information and exit",
 		type: Flag,
@@ -40,7 +40,7 @@ class ProgSpec {
 	public var author: String;
 	public var desc: Null<String>;
 	public var license: Null<Array<String>> = null;
-	public var options: Array<ArgSpec<Option, Dynamic>> = [];
+	public var flags: Array<ArgSpec<Flag, Dynamic>> = [];
 	public var positionals: Array<ArgSpec<Positional, Dynamic>> = [];
 
 	public function signature(): String {

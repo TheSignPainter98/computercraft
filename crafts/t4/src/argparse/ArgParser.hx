@@ -1,6 +1,5 @@
 package argparse;
 
-// todo positionals, help optional brackets
 import lua.Lua;
 import lua.NativeStringTools;
 
@@ -8,15 +7,15 @@ using StringTools;
 
 class ArgParser {
 	private var spec: ProgSpec;
-	private var optionMap: Map<String, ArgSpec<Option, Dynamic>>;
+	private var flagMap: Map<String, ArgSpec<Flag, Dynamic>>;
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
-		spec.options = [cast spec.helpOption, cast spec.licenseOption, cast spec.versionOption].concat(spec.options);
-		this.optionMap = [
-			for (o in spec.options)
-				for (trigger in [o.trigger.short, o.trigger.long])
-					trigger => o
+		spec.flags = [cast spec.helpFlag, cast spec.licenseFlag, cast spec.versionFlag].concat(spec.flags);
+		this.flagMap = [
+			for (f in spec.flags)
+				for (trigger in [f.trigger.short, f.trigger.long])
+					trigger => f
 		];
 	}
 
@@ -46,27 +45,27 @@ class ArgParser {
 			if (arg.charAt(0) == '-' && arg.length > 1) {
 				if (arg.charAt(1) == '-') {
 					// Long flags
-					var optSpec = optionMap[arg];
-					if (optSpec != null) {
-						parseable_args = optSpec.tokenise(parseable_args, toks, problems);
+					var flagSpec = flagMap[arg];
+					if (flagSpec != null) {
+						parseable_args = flagSpec.tokenise(parseable_args, toks, problems);
 					} else {
-						showUsage('Unknown option: $arg');
+						showUsage('Unknown flag: $arg');
 						return null;
 					}
 				} else {
 					// Short flags
 					for (i in 1...arg.length) {
 						var dekebabedArg = "-" + arg.charAt(i);
-						var optSpec = optionMap[dekebabedArg];
-						if (optSpec != null) {
+						var flagSpec = flagMap[dekebabedArg];
+						if (flagSpec != null) {
 							final unskewer = i == arg.length - 1;
 							if (unskewer)
 								parseable_args.unshift(arg.substr(i + 1));
-							parseable_args = optSpec.tokenise(parseable_args, toks, problems);
+							parseable_args = flagSpec.tokenise(parseable_args, toks, problems);
 							if (unskewer)
 								parseable_args.shift();
 						} else {
-							showUsage('Unknown option: $dekebabedArg');
+							showUsage('Unknown flag: $dekebabedArg');
 							return null;
 						}
 					}
@@ -99,7 +98,7 @@ class ArgParser {
 
 		// Defaults
 		insertDefaultsInto(args, spec.positionals);
-		insertDefaultsInto(args, spec.options);
+		insertDefaultsInto(args, spec.flags);
 
 		for (tok in toks)
 			args[tok.dest] = tok.arg;
@@ -126,7 +125,7 @@ class ArgParser {
 	}
 
 	private function checkChoices(args: Args): Array<String> {
-		return checkChoicesOf(spec.options, args).concat(checkChoicesOf(spec.positionals, args));
+		return checkChoicesOf(spec.flags, args).concat(checkChoicesOf(spec.positionals, args));
 	}
 
 	private function checkChoicesOf<T: ArgSpecTrigger>(specs: Array<ArgSpec<T, Dynamic>>, args: Args): Array<String> {
@@ -178,15 +177,15 @@ class ArgParser {
 
 	private function checkChoiceSpec<T: ArgSpecTrigger, S>(spec: ArgSpec<T, Dynamic>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
 		if (choices.indexOf(val) == -1)
-			problems.push('Option "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
+			problems.push('Flag "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
 	}
 
 	private function checkMandatoryArgs(args: Args): Array<String> {
 		var problems: Array<String> = [];
 
-		for (option in spec.options)
-			if (option.mandatory() && args[option.dest] == null)
-				problems.push('Missing mandatory flag: ${option.name()}');
+		for (flag in spec.flags)
+			if (flag.mandatory() && args[flag.dest] == null)
+				problems.push('Missing mandatory flag: ${flag.name()}');
 
 		for (positional in spec.positionals) {
 			if (positional.mandatory() && args[positional.dest] == null) {
@@ -246,18 +245,18 @@ class ArgParser {
 		help.push("");
 		help.push(spec.desc);
 
-		if (spec.options.length != 0) {
+		if (spec.flags.length != 0) {
 			help.push("");
-			help.push("OPTIONS");
+			help.push("flagS");
 
-			for (opt in spec.options) {
-				var choicesSig = ArgSpec.choicesSignature(opt.type);
+			for (flag in spec.flags) {
+				var choicesSig = ArgSpec.choicesSignature(flag.type);
 				var choicesMark = "";
 				if (choicesSig != null)
 					choicesMark = ' $choicesSig';
 				help.push("");
-				help.push('    ${opt.trigger.short}$choicesMark, ${opt.trigger.long}$choicesMark');
-				help.push('        ${opt.desc}');
+				help.push('    ${flag.trigger.short}$choicesMark, ${flag.trigger.long}$choicesMark');
+				help.push('        ${flag.desc}');
 			}
 		}
 		if (spec.positionals.length != 0) {
@@ -284,10 +283,10 @@ class ArgParser {
 	private function showUsage(?problem: String) {
 		var usageParts = ["usage:", spec.name];
 
-		spec.options.sort((o1, o2) -> o1.compare(o2));
+		spec.flags.sort((o1, o2) -> o1.compare(o2));
 
-		for (opt in spec.options)
-			usageParts.push(opt.signature());
+		for (flag in spec.flags)
+			usageParts.push(flag.signature());
 
 		for (pos in spec.positionals)
 			usageParts.push(pos.signature());
@@ -297,6 +296,6 @@ class ArgParser {
 		Lua.print(usageParts.join(" "));
 
 		if (problem != null)
-			Lua.print('For more information, try the ${spec.helpOption.trigger.long} flag.');
+			Lua.print('For more information, try the ${spec.helpFlag.trigger.long} flag.');
 	}
 }

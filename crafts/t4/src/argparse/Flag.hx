@@ -1,7 +1,7 @@
 package argparse;
 
 @:structInit
-class Option implements ArgSpecTrigger {
+class Flag implements ArgSpecTrigger {
 	public var short: String;
 	public var long: String;
 
