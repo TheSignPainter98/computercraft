@@ -8,10 +8,10 @@ class ArgSpec<T:ArgSpecTrigger, V> {
 	public var dflt: Null<V> = null;
 	public var type: ArgType;
 	public var parse(get, never): RawArgList->ParserFragmentResult<V>;
-	public var parser: Null<RawArgList->ParserFragmentResult<V>> = null;
+	public var action: Null<RawArgList->ParserFragmentResult<V>> = null;
 
 	public inline function get_parse(): RawArgList->ParserFragmentResult<V> {
-		return if (parser != null) parser; else type.defaultParser();
+		return if (action != null) action; else type.defaultAction();
 	}
 
 	public function compare(other: ArgSpec<T, Dynamic>): Int {

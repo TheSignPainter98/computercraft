@@ -1,6 +1,6 @@
 import argparse.ArgAccessor;
+import argparse.ArgAction;
 import argparse.ArgParser;
-import argparse.ArgType;
 import argparse.ProgSpec;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
@@ -77,11 +77,24 @@ class Main {
 			{
 				dest: VERBOSE,
 				desc: "Output quietly",
-				type: FalseFlag,
+				type: Int(null),
+				dflt: 1,
+				action: ArgAction.storeConst(0),
 				trigger: {
 					short: "-q",
 					long: "--quiet",
 				},
+			},
+			{
+				dest: VERBOSE,
+				desc: "Output verbosely",
+				type: Int(null),
+				dflt: 1,
+				action: ArgAction.storeConst(2),
+				trigger: {
+					short: "-v",
+					long: "--verbose",
+				}
 			},
 		],
 	};
