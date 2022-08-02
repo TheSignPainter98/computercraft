@@ -1,29 +1,18 @@
 package argparse;
 
+// todo positionals, help optional brackets
 import lua.Lua;
 import lua.NativeStringTools;
 
 using StringTools;
 
-@:structInit
-class Token {
-	public var dest: String;
-	public var arg: Arg;
-}
-
-enum ParserState {
-	Capture;
-	CaptureOption(src: String, opt: ArgSpec<Option>);
-	CapturePositionalList(dest: String, list: Array<String>);
-}
-
 class ArgParser {
 	private var spec: ProgSpec;
-	private var optionMap: Map<String, ArgSpec<Option>>;
+	private var optionMap: Map<String, ArgSpec<Option, Dynamic>>;
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
-		spec.options = [spec.helpOption, spec.licenseOption, spec.versionOption].concat(spec.options);
+		spec.options = [cast spec.helpOption, cast spec.licenseOption, cast spec.versionOption].concat(spec.options);
 		this.optionMap = [
 			for (o in spec.options)
 				for (trigger in [o.trigger.short, o.trigger.long])
@@ -39,140 +28,74 @@ class ArgParser {
 		return parseToks(toks);
 	}
 
-	private function tokenise(raw_args: Array<String>): Null<Array<Token>> {
-		if (raw_args.length == 0)
+	private function tokenise(rawArgs: Array<String>): Null<Array<Token<Dynamic>>> {
+		if (rawArgs.length == 0)
 			return [];
 
-		var parserState = Capture;
 		var positionalIterator = spec.positionals.iterator();
-		var toks: Array<Token> = [];
+		var toks: Array<Token<Dynamic>> = [];
+
+		var remainderDeclIndex = rawArgs.indexOf("--");
+		var remainderArgs: RawArgList = Verbatim(if (remainderDeclIndex != -1) rawArgs.slice(remainderDeclIndex + 1); else []);
+
+		var parseable_args: RawArgList = Parseable(if (remainderDeclIndex != -1) rawArgs.slice(0, remainderDeclIndex); else rawArgs);
+		var problems: Array<String> = [];
 
 		var arg: String;
-		while ((arg = raw_args.shift()) != null) {
-			switch (parserState) {
-				case Capture:
-					if (arg == "--") {
-						var positional: Null<ArgSpec<Positional>> = null;
-						while (positionalIterator.hasNext() && raw_args.length != 0) {
-							positional = positionalIterator.next();
-							switch (positional.trigger.howMany) {
-								case Exactly(1):
-									toks.push({
-										dest: positional.dest,
-										arg: String(raw_args[0]),
-									});
-								case Exactly(n):
-									toks.push({
-										dest: positional.dest,
-										arg: List(raw_args.slice(0, n)),
-									});
-									raw_args = raw_args.slice(n);
-								case AtLeast(_):
-									toks.push({
-										dest: positional.dest,
-										arg: List(raw_args),
-									});
-									raw_args = [];
-							}
-						}
-
-						if (positional == null) {
-							showUsage("Cannot sink remaining arguments");
-							return null;
-						}
-
-						// if (positional.trigger.howMany.match(Exactly(1))) {
-						//	toks.push({
-						//		dest: positional.dest,
-						//		arg: String(raw_args[0]),
-						//	});
-						// } else {
-						//	toks.push({
-						//		dest: positional.dest,
-						//		arg: List(raw_args),
-						//	});
-						// }
-
-						return toks;
-					} else if (arg.charAt(0) == "-" && arg.length > 1) {
-						if (arg.substr(0, 2) == "--") {
-							var optSpec = optionMap[arg];
-							if (optSpec != null) {
-								switch (optSpec.type) {
-									case Flag(f):
-										toks.push({dest: optSpec.dest, arg: Flag(f)});
-									default:
-										parserState = CaptureOption(arg, optSpec);
-								}
-							} else {
-								showUsage('Unknown option: $arg');
-								return null;
-							}
-						} else
-							for (i in 1...arg.length) {
-								var dekebabedArg = "-" + arg.charAt(i);
-								var optSpec = optionMap[dekebabedArg];
-								if (optSpec != null)
-									switch (optSpec.type) {
-										case Flag(f):
-											toks.push({dest: optSpec.dest, arg: Flag(f)});
-										default:
-											if (i < arg.length - 1)
-												raw_args.unshift(arg.substr(i + 1));
-											parserState = CaptureOption(dekebabedArg, optSpec);
-											break;
-									}
-								else {
-									showUsage('Unknown option: $dekebabedArg');
-									return null;
-								}
-							}
+		while ((arg = parseable_args.shift()) != null) {
+			if (arg.charAt(0) == '-' && arg.length > 1) {
+				if (arg.charAt(1) == '-') {
+					// Long flags
+					var optSpec = optionMap[arg];
+					if (optSpec != null) {
+						parseable_args = optSpec.tokenise(parseable_args, toks, problems);
 					} else {
-						if (!positionalIterator.hasNext()) {
-							showUsage('Unmatched arguments: ${[arg].concat(raw_args).join(' ')}');
-							return null;
-						}
-
-						var positional = positionalIterator.next();
-						switch (positional.trigger.howMany) {
-							case Exactly(1):
-								toks.push({dest: positional.dest, arg: String(arg)});
-							default:
-								parserState = CapturePositionalList(positional.dest, [arg]);
-						}
-					}
-				case CaptureOption(src, spec):
-					if (arg.charAt(0) == "-" && arg != "-") {
-						showUsage('Option $src requires an argument');
+						showUsage('Unknown option: $arg');
 						return null;
 					}
-					toks.push({dest: spec.dest, arg: String(arg)});
-					parserState = Capture;
-				case CapturePositionalList(dest, list):
-					if (arg.charAt(0) == "-" && arg != "-") {
-						toks.push({dest: dest, arg: List(list)});
-						raw_args.unshift(arg);
-						parserState = Capture;
-					} else {
-						list.push(arg);
+				} else {
+					// Short flags
+					for (i in 1...arg.length) {
+						var dekebabedArg = "-" + arg.charAt(i);
+						var optSpec = optionMap[dekebabedArg];
+						if (optSpec != null) {
+							final unskewer = i == arg.length - 1;
+							if (unskewer)
+								parseable_args.unshift(arg.substr(i + 1));
+							parseable_args = optSpec.tokenise(parseable_args, toks, problems);
+							if (unskewer)
+								parseable_args.shift();
+						} else {
+							showUsage('Unknown option: $dekebabedArg');
+							return null;
+						}
 					}
+				}
+			} else {
+				// Positional
+				if (!positionalIterator.hasNext()) {
+					parseable_args.unshift(arg);
+					showUsage('Unmatched arguments: ${parseable_args.join(' ')}');
+					return null;
+				}
+
+				var positional = positionalIterator.next();
+
+				parseable_args.unshift(arg);
+				parseable_args = positional.tokenise(parseable_args, toks, problems);
 			}
 		}
 
-		switch (parserState) {
-			case Capture:
-			case CaptureOption(src, spec):
-				showUsage('Option $src requires an argument');
-				return null;
-			case CapturePositionalList(dest, list):
-				toks.push({dest: dest, arg: List(list)});
-		}
+		// Parse remainder args into positionals
+		var positional: Null<ArgSpec<Positional, Dynamic>> = null;
+		while (remainderArgs.length != 0 && positionalIterator.hasNext())
+			remainderArgs = positionalIterator.next().tokenise(remainderArgs, toks, problems);
 
 		return toks;
 	}
 
-	private function parseToks(toks: Array<Token>): Null<Args> {
-		var args: Args = new Map();
+	private function parseToks(toks: Array<Token<Dynamic>>): Null<Args> {
+		var args = new Args();
 
 		// Defaults
 		insertDefaultsInto(args, spec.positionals);
@@ -194,7 +117,7 @@ class ArgParser {
 		return args;
 	}
 
-	private function insertDefaultsInto<T: ArgSpecTrigger>(args: Args, specs: Array<ArgSpec<T>>) {
+	private function insertDefaultsInto<T: ArgSpecTrigger>(args: Args, specs: Array<ArgSpec<T, Dynamic>>) {
 		for (spec in specs) {
 			var dflt = spec.getDefault();
 			if (dflt != null)
@@ -206,20 +129,20 @@ class ArgParser {
 		return checkChoicesOf(spec.options, args).concat(checkChoicesOf(spec.positionals, args));
 	}
 
-	private function checkChoicesOf<T: ArgSpecTrigger>(specs: Array<ArgSpec<T>>, args: Args): Array<String> {
+	private function checkChoicesOf<T: ArgSpecTrigger>(specs: Array<ArgSpec<T, Dynamic>>, args: Args): Array<String> {
 		var problems = [];
 
 		for (spec in specs) {
 			var val = args[spec.dest];
 			switch (spec.type) {
-				case String(_, null) | Int(_, null) | Float(_, null):
-				case String(_, choices):
+				case String(null) | Int(null) | Float(null):
+				case String(choices):
 					var arg = args[spec.dest];
 					if (arg == null)
 						continue;
 
 					checkChoiceSpec(spec, cast args[spec.dest], choices, problems);
-				case Int(_, choices):
+				case Int(choices):
 					var arg = args[spec.dest];
 					if (arg == null)
 						continue;
@@ -229,10 +152,10 @@ class ArgParser {
 						problems.push('Expected integer, got "$arg"');
 						continue;
 					}
-					args[spec.dest] = Arg.Int(i);
+					args[spec.dest] = i;
 
 					checkChoiceSpec(spec, i, choices, problems);
-				case Float(_, choices):
+				case Float(choices):
 					var arg = args[spec.dest];
 					if (arg == null)
 						continue;
@@ -243,7 +166,8 @@ class ArgParser {
 						continue;
 					}
 
-					args[spec.dest] = Arg.Float(f);
+					args[spec.dest] = f;
+
 					checkChoiceSpec(spec, f, choices, problems);
 				default:
 			}
@@ -252,7 +176,7 @@ class ArgParser {
 		return problems;
 	}
 
-	private function checkChoiceSpec<T: ArgSpecTrigger, S>(spec: ArgSpec<T>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
+	private function checkChoiceSpec<T: ArgSpecTrigger, S>(spec: ArgSpec<T, Dynamic>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
 		if (choices.indexOf(val) == -1)
 			problems.push('Option "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
 	}
@@ -325,13 +249,13 @@ class ArgParser {
 		if (spec.options.length != 0) {
 			help.push("");
 			help.push("OPTIONS");
-			help.push("");
 
 			for (opt in spec.options) {
 				var choicesSig = ArgSpec.choicesSignature(opt.type);
 				var choicesMark = "";
 				if (choicesSig != null)
 					choicesMark = ' $choicesSig';
+				help.push("");
 				help.push('    ${opt.trigger.short}$choicesMark, ${opt.trigger.long}$choicesMark');
 				help.push('        ${opt.desc}');
 			}
@@ -339,13 +263,13 @@ class ArgParser {
 		if (spec.positionals.length != 0) {
 			help.push("");
 			help.push("ARGUMENTS");
-			help.push("");
 
 			for (pos in spec.positionals) {
 				var choicesSig = ArgSpec.choicesSignature(pos.type);
 				var choicesMark = "";
 				if (choicesSig != null)
 					choicesMark = ' (in $choicesSig)';
+				help.push("");
 				help.push('    ${pos.name()}$choicesMark');
 				help.push('        ${pos.desc}');
 			}

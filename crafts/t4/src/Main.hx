@@ -1,4 +1,6 @@
+import argparse.ArgAccessor;
 import argparse.ArgParser;
+import argparse.ArgType;
 import argparse.ProgSpec;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
@@ -17,6 +19,11 @@ enum Result {
 }
 
 class Main {
+	private static final SET_AUTO_START = new ArgAccessor<Bool>();
+	private static final MACHINE = new ArgAccessor<Machine>();
+	private static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
+	private static final VERBOSE = new ArgAccessor<Array<String>>();
+
 	private static var cliSpec: ProgSpec = {
 		name: "t4",
 		shortDesc: "Trainable train-track tracker",
@@ -39,17 +46,18 @@ class Main {
 		],
 		positionals: [
 			{
-				dest: "machine",
+				dest: MACHINE,
 				desc: "The type of machine this computer represents",
-				type: String(null, ["display", "server", "signal", "yard"]),
+				type: String(["display", "server", "signal", "yard"]),
 				trigger: {
 					metavar: "machine",
 				},
 			},
 			{
-				dest: "machine_args",
+				dest: MACHINE_ARGS,
 				desc: "The arguments to pass to the machine",
-				type: List(String(null, null)),
+				type: List(String(null), AtLeast(0)),
+				dflt: [],
 				trigger: {
 					metavar: "args",
 					howMany: AtLeast(0),
@@ -58,23 +66,23 @@ class Main {
 		],
 		options: [
 			{
-				dest: "setAutoStart",
+				dest: SET_AUTO_START,
 				desc: "Don't use the arguments supplied this invokation in subsequent startups",
-				type: Flag(false),
+				type: FalseFlag,
 				trigger: {
 					short: "-n",
 					long: "--no-autostart",
 				},
 			},
 			{
-				dest: "verbose",
-				desc: "Output verbosely",
-				type: Flag(true),
+				dest: VERBOSE,
+				desc: "Output quietly",
+				type: FalseFlag,
 				trigger: {
-					short: "-v",
-					long: "--verbose",
+					short: "-q",
+					long: "--quiet",
 				},
-			}
+			},
 		],
 	};
 
@@ -88,15 +96,15 @@ class Main {
 			return;
 		}
 
-		if (args.setAutoStart)
+		if (args[SET_AUTO_START])
 			configureStartup();
 		else
 			deconfigureStartup();
 
-		var config = new Config(args.machine);
+		final machine = args[MACHINE];
+		var config = new Config(machine);
 
-		final machine: Machine = args.machine;
-		machine.exec(args.machine_args, config);
+		machine.exec(args[MACHINE_ARGS], config);
 
 		trace("Good night");
 
