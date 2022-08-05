@@ -6,10 +6,9 @@ import cc.FileSystem;
 import haxe.Serializer;
 import haxe.Unserializer;
 import machine.Machine;
+import events.CustomEvent.TAG_SAVE_INVALIDATED;
 
 class ConfigImpl {
-	public static final SAVE_INVALIDATED_EVENT = "save-invalidated";
-
 	var config_file_name: String;
 	var synced_with_disk: Bool;
 	var data: Map<String, Dynamic>;
@@ -21,7 +20,7 @@ class ConfigImpl {
 
 	public function invalidate() {
 		synced_with_disk = false;
-		OS.queueEvent(SAVE_INVALIDATED_EVENT);
+		OS.queueEvent(TAG_SAVE_INVALIDATED);
 	}
 
 	private function load(fname: String): Map<String, Dynamic> {
