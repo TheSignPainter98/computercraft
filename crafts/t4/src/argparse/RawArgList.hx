@@ -19,13 +19,15 @@ abstract RawArgList(RawArgListImpl) from RawArgListImpl to RawArgListImpl {
 
 	public inline function unshift(s: String) {
 		switch (this) {
-			case Parseable(l): l.unshift(s);
-			case Verbatim(l): l.unshift(s);
+			case Parseable(l):
+				l.unshift(s);
+			case Verbatim(l):
+				l.unshift(s);
 		}
 	}
 
 	public inline function join(s: Null<String>) {
-		return switch (this){
+		return switch (this) {
 			case Parseable(l): l.join(s);
 			case Verbatim(l): l.join(s);
 		}

@@ -1,7 +1,7 @@
 package argparse;
 
 class ArgAction {
-	public static function storeConst<V>(v: V): RawArgList -> ParserFragmentResult<V> {
+	public static function storeConst<V>(v: V): RawArgList->ParserFragmentResult<V> {
 		return (raw) -> {
 			return {
 				result: Right(v),
