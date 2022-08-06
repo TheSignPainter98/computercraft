@@ -2,11 +2,11 @@ package server;
 
 import argparse.ArgAccessor;
 import argparse.ArgParser;
+import argparse.Args;
 import argparse.ProgSpec;
 import cc.OS;
 import cc.Rednet;
 import config.Config;
-import events.Event;
 import events.EventEmitter;
 import events.CustomEvent.EVENT_SAVE_INVALIDATED;
 import events.OSEvent.EVENT_REDNET_MESSAGE;
@@ -50,32 +50,28 @@ class Server {
 			},
 		}
 		],
-		flags: [],
 	}
 
-	public static function main(args: Array<String>, settings: Config) {
+	public static function main(argv: Array<String>, settings: Config) {
 		trace("I am a server.");
+
+		final parser = new ArgParser(cliSpec);
+		final args = parser.parse(argv);
+		if (args == null)
+			return;
 
 		init(args, settings);
 
 		var emitter = new EventEmitter();
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
-		emitter.addEventListener(EVENT_TERMINATE, (_) -> emitter.stopListening());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, processRednetEvent);
 
 		emitter.listen();
 	}
 
-	private static function init(argv: Array<String>, settings: Config): Bool {
-		final parser = new ArgParser(cliSpec);
-		final args = parser.parse(argv);
-		if (args == null)
-			return false;
-
+	private static function init(args: Args, settings: Config) {
 		Rednet.host(SERVER_PROTOCOL, args[NETWORK_NAME]);
-
-		return true;
 	}
 
 	private static function processRednetEvent(e: RednetMessageEvent) {
