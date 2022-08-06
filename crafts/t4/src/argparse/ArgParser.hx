@@ -11,7 +11,12 @@ class ArgParser {
 
 	public function new(spec: ProgSpec) {
 		this.spec = spec;
-		spec.flags = [cast spec.helpFlag, cast spec.licenseFlag, cast spec.versionFlag].concat(spec.flags);
+
+		var preflags = [cast spec.helpFlag, cast spec.versionFlag];
+		if (spec.license != null)
+			preflags.push(cast spec.licenseFlag);
+
+		spec.flags = preflags.concat(spec.flags);
 		this.flagMap = [
 			for (f in spec.flags)
 				for (trigger in [f.trigger.short, f.trigger.long])
@@ -226,9 +231,7 @@ class ArgParser {
 	}
 
 	private function showLicense() {
-		if (spec.license != null) {
-			Lua.print([spec.signature(), spec.copyright(), "",].concat(spec.license).join("\n"));
-		}
+		Lua.print([spec.signature(), spec.copyright(), "",].concat(spec.license).join("\n"));
 	}
 
 	private function showVersion() {
