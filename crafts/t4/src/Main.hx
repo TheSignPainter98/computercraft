@@ -99,8 +99,11 @@ class Main {
 		],
 	};
 
-	public static function main() {
+	private static function __init__() {
 		haxe.macro.Compiler.includeFile("prepend.lua");
+	}
+
+	public static function main() {
 		var args = Sys.args();
 
 		var parser = new ArgParser(cliSpec);
