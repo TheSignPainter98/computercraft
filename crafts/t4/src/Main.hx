@@ -12,6 +12,7 @@ import machine.Machine;
 import model.Signal;
 import config.Config;
 import packet.Packet;
+using lua.NativeStringTools;
 
 enum Result {
 	Ok;
@@ -19,6 +20,8 @@ enum Result {
 }
 
 class Main {
+	private static inline final ARG_SEP = '';
+
 	private static final SET_AUTO_START = new ArgAccessor<Bool>();
 	private static final MACHINE = new ArgAccessor<Machine>();
 	private static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
@@ -104,10 +107,10 @@ class Main {
 	}
 
 	public static function main() {
-		var args = Sys.args();
+		var argv = Sys.args().map((s) -> s.gsub(ARG_SEP, " "));
 
 		var parser = new ArgParser(cliSpec);
-		var args = parser.parse(Sys.args());
+		var args = parser.parse(argv);
 		if (args == null) {
 			return;
 		}
@@ -129,7 +132,7 @@ class Main {
 
 	private static function configureStartup() {
 		var args = Sys.args();
-		var fmtdArgs = args.map((s) -> '"$s"').join(", ");
+		var fmtdArgs = args.map((s) -> '"${s.gsub(' ', ARG_SEP)}"').join(", ");
 		var hook = 'shell.run("t4", $fmtdArgs)';
 
 		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
