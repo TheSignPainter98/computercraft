@@ -1,4 +1,4 @@
-package model;
+package server.model;
 
 @:enum
 abstract SignalState(String) {

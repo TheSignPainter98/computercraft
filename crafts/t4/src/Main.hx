@@ -9,9 +9,8 @@ import haxe.extern.Rest;
 import lua.Lua;
 import lua.Table;
 import machine.Machine;
-import model.Signal;
 import config.Config;
-import packet.Packet;
+
 using lua.NativeStringTools;
 
 enum Result {
