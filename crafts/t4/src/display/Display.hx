@@ -1,5 +1,6 @@
 package display;
 
+import argparse.Args;
 import cc.OS;
 import config.Config;
 import events.Event;
@@ -8,7 +9,7 @@ import events.CustomEvent.EVENT_SAVE_INVALIDATED;
 import events.OSEvent.EVENT_TERMINATE;
 
 class Display {
-	public static function main(args: Array<String>, settings: Config) {
+	public static function main(args: Args, settings: Config) {
 		trace("I am a display.");
 
 		var emitter = new EventEmitter();

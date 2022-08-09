@@ -21,10 +21,11 @@ enum Result {
 class Main {
 	private static inline final ARG_SEP = '';
 
-	private static final SET_AUTO_START = new ArgAccessor<Bool>();
-	private static final MACHINE = new ArgAccessor<Machine>();
-	private static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
-	private static final VERBOSE = new ArgAccessor<Array<String>>();
+	public static final DEBUG_MODE = new ArgAccessor<Bool>();
+	public static final MACHINE = new ArgAccessor<Machine>();
+	public static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
+	public static final SET_AUTO_START = new ArgAccessor<Bool>();
+	public static final VERBOSE = new ArgAccessor<Array<String>>();
 
 	private static var cliSpec: ProgSpec = {
 		name: "t4",
@@ -50,7 +51,7 @@ class Main {
 			{
 				dest: MACHINE,
 				desc: "The type of machine this computer represents",
-				type: String(["display", "server", "signal", "yard"]),
+				type: String([MachineDisplay, MachineServer, MachineSignal, MachineStation, MachineYard]),
 				trigger: {
 					metavar: "machine",
 				},
@@ -67,6 +68,15 @@ class Main {
 			}
 		],
 		flags: [
+			{
+				dest: DEBUG_MODE,
+				desc: "Enable debugging mode (disables some checks)",
+				type: Flag,
+				trigger: {
+					short: "-d",
+					long: "--debug",
+				}
+			},
 			{
 				dest: SET_AUTO_START,
 				desc: "Don't use the arguments supplied this invokation in subsequent startups",
@@ -122,7 +132,7 @@ class Main {
 		final machine = args[MACHINE];
 		var config = new Config(machine);
 
-		machine.exec(args[MACHINE_ARGS], config);
+		machine.exec(args, config);
 
 		trace("Good night");
 

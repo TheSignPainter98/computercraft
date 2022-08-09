@@ -43,6 +43,11 @@ class ProgSpec {
 	public var flags: Array<ArgSpec<Flag, Dynamic>> = [];
 	public var positionals: Array<ArgSpec<Positional, Dynamic>> = [];
 
+	public function parse(argv: Array<String>): Args {
+		final parser = new ArgParser(this);
+		return parser.parse(argv);
+	}
+
 	public function signature(): String {
 		var maybeDesc = shortDesc != null ? " - " + shortDesc : "";
 		return name + maybeDesc + " v" + version;
