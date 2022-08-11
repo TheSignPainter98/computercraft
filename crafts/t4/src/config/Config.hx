@@ -60,9 +60,9 @@ class ConfigImpl {
 		invalidate();
 	}
 
-	public function set_default<T>(key: Accessor<T>, defaultValue: T)
+	public function setDefault<T>(key: Accessor<T>, defaultValue: ()->T)
 		if (data[key] == null)
-			set(key, defaultValue);
+			set(key, defaultValue());
 }
 
 @:forward
