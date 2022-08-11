@@ -69,7 +69,9 @@ dir=$(dirname "$src")
 artifact=$dir/$artifact_basename
 
 do_upload() {
-	install -Dm644 $1 $craftos_path/computer/$craftos_pc_id/
+	for d in $craftos_path/computer/**/; do
+		install -Dm644 $1 $d
+	done
 
 	initial="Last upload: $(date) "
 	date_hash_width=$(($(tput cols) - ${#initial}))
@@ -81,6 +83,10 @@ build() {
 	haxe build.hxml || rm -f $artifact_basename
 }
 
+for to_remove in "$artifact_basename" startup.lua; do
+	rm -f $craftos_path/computer/**/$to_remove
+done
+
 if [[ $upload_only -ne 0 ]]; then
 	build && do_upload $artifact
 	exit
@@ -89,10 +95,6 @@ fi
 md5sum_deps() {
 	md5sum $(find $(dirname $1) -name '*.hx' | sort)
 }
-
-for to_remove in "$artifact_basename" startup.lua; do
-	rm -f $craftos_path/computer/$craftos_pc_id/$to_remove
-done
 
 craftos &
 trap "kill -- $!" INT TERM ERR ILL
