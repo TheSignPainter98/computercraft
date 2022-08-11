@@ -15,23 +15,16 @@ typedef Host = String;
 typedef HostID = Int;
 
 @:structInit
-class HostedProtocols {
+class HostedProtocol {
 	public final protocol: Protocol;
 	public final host: Host;
 }
 
 @:structInit
 class Packet<T> {
-	// public final hdr: PacketHeader;
 	public final tag: MessageTag<T>;
 	public final payload: T;
 }
-
-// @:structInit
-// class PacketHeader {
-// 	public final protocol: Protocol;
-// 	public final sourceId: Int;
-// }
 
 class RednetManager {
 	private static inline final MAX_RETRIES = 5;
@@ -40,30 +33,28 @@ class RednetManager {
 	private static var modem: Null<String>;
 
 	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (HostID, Dynamic) -> Void>>;
-	private var hostedProtocols: Array<HostedProtocols>;
+	private var hostedProtocols: Array<HostedProtocol>;
 
 	public function new() {
 		responses = new Map();
 		hostedProtocols = [];
 	}
 
-	public function open(?debugMode: Bool): Result {
-		if (modem != null)
+	public function open(modemName: String, ?debugMode: Bool): Result {
+		if (rednetIsReady().match(None))
 			return Ok;
 
-		for (direction in ["top", "bottom", "left", "right", "front", "back"])
-			if (Peripheral.isPresent(direction) && Peripheral.getType(direction) == "modem") {
-				final m: Modem = Peripheral.wrap(direction);
-				if (m.isWireless() || debugMode) {
-					modem = direction;
-					break;
-				}
-			}
+		{
+			final m: Modem = Peripheral.wrap(modemName);
+			if (m == null)
+				return Err('No wireless modem attached at $modemName');
+			if (!(m.isWireless() || debugMode))
+				return Err('Modem $modemName is not wireless');
+		}
 
-		if (modem == null)
-			return Err('No wireless modems attached!');
-
+		modem = modemName;
 		Rednet.open(modem);
+
 		if (!Rednet.isOpen(modem))
 			return Err('Failed to open connection with modem "$modem"');
 
@@ -79,7 +70,7 @@ class RednetManager {
 	}
 
 	public function sendDirect<T>(recipient: Int, protocol: Protocol, tag: MessageTag<T>, msg: T): Result {
-		switch (rednetIsReady()){
+		switch (rednetIsReady()) {
 			case Some(err):
 				return Err(err);
 			default:
@@ -136,19 +127,18 @@ class RednetManager {
 	}
 
 	public function close() {
-		unhost();
 		if (modem != null)
 			Rednet.close(modem);
 	}
 
-	public function addPacketResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (HostID, T)->Void) {
+	public function addPacketResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (HostID, T) -> Void) {
 		if (responses[protocol] == null) {
 			responses[protocol] = new Map();
 		}
 		responses[protocol][tag] = listener;
 	}
 
-	public function receive<T>(protocol: Protocol, expectedTag: MessageTag<T>, maxAttempts=MAX_RETRIES): Either<String, T> {
+	public function receive<T>(protocol: Protocol, expectedTag: MessageTag<T>, maxAttempts = MAX_RETRIES): Either<String, T> {
 		switch (rednetIsReady()) {
 			case Some(err):
 				return Left(err);
@@ -167,10 +157,9 @@ class RednetManager {
 				return Left('Protocol "$protocol" is unknown to this rednet manager and hence may never be received');
 		}
 
-
 		final recvd: Packet<T> = {
 			var raw: Null<ReceivedMessage<Packet<Dynamic>>> = null;
-			for (i in 1...1+maxAttempts) {
+			for (i in 1...1 + maxAttempts) {
 				raw = Rednet.receive(protocol);
 				if (raw.message.tag == expectedTag)
 					break;
@@ -184,8 +173,7 @@ class RednetManager {
 		return Right(recvd.payload);
 	}
 
-	public function onRednetMessageEvent(e: RednetMessageEvent)
-	{
+	public function onRednetMessageEvent(e: RednetMessageEvent) {
 		trace('Got rednet event $e');
 		if (e == null)
 			return;

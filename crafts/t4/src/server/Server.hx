@@ -12,12 +12,13 @@ import events.CustomEvent.EVENT_SAVE_INVALIDATED;
 import events.OSEvent.EVENT_REDNET_MESSAGE;
 import events.OSEvent.EVENT_TERMINATE;
 import events.OSEvent.RednetMessageEvent;
-import packet.Packet;
+import rednetmgr.RednetManager;
 
 class Server {
 	public static inline final SERVER_PROTOCOL = "t4-server";
 
 	private static final NETWORK_NAME = new ArgAccessor<String>();
+	private static final MODEM = new ArgAccessor<String>();
 
 	private static var cliSpec: ProgSpec = {
 		name: "t4-server",
@@ -40,48 +41,57 @@ class Server {
 			"along with this program.  If not, see <https://www.gnu.org/licenses/>.",
 		],
 		positionals: [
-		{
-			dest: NETWORK_NAME,
-			desc: "The name of the network which this server controlls (currently unused)",
-			type: String(null),
-			dflt: "universe",
-			trigger: {
-				metavar: "network",
-			},
-		}
+			{
+				dest: NETWORK_NAME,
+				desc: "The name of the network which this server controls",
+				type: String(null),
+				dflt: "universe",
+				trigger: {
+					metavar: "network",
+				},
+			}
 		],
+		flags: [
+			{
+				dest: MODEM,
+				desc: "Where the wireless router is attached",
+				type: String(["top", "bottom", "left", "right", "front", "back"]),
+				dflt: "top",
+				trigger: {
+					short: "-m",
+					long: "--modem",
+				}
+			}
+		]
 	}
 
-	public static function main(argv: Array<String>, settings: Config) {
+	public static function main(t4Args: Args, settings: Config) {
 		trace("I am a server.");
 
-		final parser = new ArgParser(cliSpec);
-		final args = parser.parse(argv);
+		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
 		if (args == null)
 			return;
 
 		init(args, settings);
 
 		var emitter = new EventEmitter();
+		var rednetMgr = new RednetManager();
+
+		rednetMgr.open(args[MODEM], t4Args[Main.DEBUG_MODE]);
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
-		emitter.addEventListener(EVENT_REDNET_MESSAGE, processRednetEvent);
+		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednetMgr.onRednetMessageEvent);
 
 		emitter.listen();
+
+		deinit(args, settings);
 	}
 
 	private static function init(args: Args, settings: Config) {
 		Rednet.host(SERVER_PROTOCOL, args[NETWORK_NAME]);
 	}
 
-	private static function processRednetEvent(e: RednetMessageEvent) {
-		if (e.protocol != SERVER_PROTOCOL)
-			return;
-
-		processPacket(e.message);
-	}
-
-	private static function processPacket(pkt: Packet) {
-		trace('Got packet $pkt');
+	private static function deinit(args: Args, settings: Config) {
+		Rednet.unhost(SERVER_PROTOCOL, args[NETWORK_NAME]);
 	}
 }
