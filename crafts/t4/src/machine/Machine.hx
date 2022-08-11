@@ -4,6 +4,7 @@ import argparse.Args;
 import config.Config;
 import display.Display;
 import server.Server;
+import station.Station;
 import signal.Signal;
 import yard.Yard;
 
@@ -12,6 +13,7 @@ abstract Machine(String) from String to String {
 	var MachineDisplay = 'display';
 	var MachineServer = 'server';
 	var MachineSignal = 'signal';
+	var MachineStation = 'station';
 	var MachineYard = 'yard';
 
 	public inline function exec(parentArgs: Args, settings: Config) {
@@ -22,6 +24,8 @@ abstract Machine(String) from String to String {
 				Server.main(parentArgs, settings);
 			case MachineSignal:
 				Signal.main(parentArgs, settings);
+			case MachineStation:
+				Station.main(parentArgs, settings);
 			case MachineYard:
 				Yard.main(parentArgs, settings);
 			default:
