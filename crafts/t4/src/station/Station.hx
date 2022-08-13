@@ -37,7 +37,6 @@ class Station {
 	public static inline final RESOLVE_ID_RESPONSE: MessageTag<Int> = "t4-station-id-resolve-response";
 
 	private static final NAME = new ArgAccessor<String>();
-	private static final MODEM = new ArgAccessor<String>();
 
 	private static inline final ID: Accessor<Int> = "id";
 
@@ -57,18 +56,6 @@ class Station {
 				},
 			}
 		],
-		flags: [
-			{
-				dest: MODEM,
-				desc: "Where the wireless router is attached",
-				type: String(Main.DIRECTIONS),
-				dflt: "top",
-				trigger: {
-					short: "-m",
-					long: "--modem",
-				}
-			}
-		]
 	}
 
 	// private static var serverID: Int;
@@ -83,7 +70,7 @@ class Station {
 			return;
 
 		final rednet = new RednetManager();
-		rednet.open(args[MODEM], t4Args[Main.DEBUG_MODE]);
+		rednet.open(args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {
 			case Err(err):

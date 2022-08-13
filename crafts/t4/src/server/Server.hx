@@ -17,8 +17,6 @@ import rednetmgr.RednetManager;
 class Server {
 	public static inline final SERVER_PROTOCOL = "t4-server";
 
-	private static final MODEM = new ArgAccessor<String>();
-
 	private static var cliSpec: ProgSpec = {
 		name: "t4-server",
 		shortDesc: "t4 central server",
@@ -39,18 +37,6 @@ class Server {
 			"You should have received a copy of the GNU General Public License",
 			"along with this program.  If not, see <https://www.gnu.org/licenses/>.",
 		],
-		flags: [
-			{
-				dest: MODEM,
-				desc: "Where the wireless router is attached",
-				type: String(Main.DIRECTIONS),
-				dflt: "top",
-				trigger: {
-					short: "-m",
-					long: "--modem",
-				}
-			}
-		]
 	}
 
 	public static function main(t4Args: Args, settings: Config) {
@@ -63,7 +49,7 @@ class Server {
 		var emitter = new EventEmitter();
 		var rednet = new RednetManager();
 
-		rednet.open(args[MODEM], t4Args[Main.DEBUG_MODE]);
+		rednet.open(args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 		rednet.host(SERVER_PROTOCOL, args[Main.NETWORK]);
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
