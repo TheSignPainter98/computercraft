@@ -180,7 +180,7 @@ class Main {
 
 		var startup = [];
 		if (display != "")
-			startup.push('term.redirect(peripheral.find("$display"))');
+			startup.push('term.redirect(peripheral.wrap("$display"))');
 		startup.push('shell.run("t4", $fmtdArgs)');
 
 		var slug = startup.join('\n');
