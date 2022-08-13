@@ -2,13 +2,13 @@ package argparse;
 
 @:structInit
 class ArgSpec<T:ArgSpecTrigger, V> {
-	public var dest: ArgAccessor<V>;
-	public var desc: Null<String> = null;
-	public var trigger: T;
-	public var dflt: Null<V> = null;
-	public var type: ArgType;
+	public final dest: ArgAccessor<V>;
+	public final desc: Null<String> = null;
+	public final trigger: T;
+	public final dflt: Null<V> = null;
+	public final type: ArgType;
 	public var parse(get, never): RawArgList->ParserFragmentResult<V>;
-	public var action: Null<RawArgList->ParserFragmentResult<V>> = null;
+	public final action: Null<RawArgList->ParserFragmentResult<V>> = null;
 
 	public inline function get_parse(): RawArgList->ParserFragmentResult<V> {
 		return if (action != null) action; else type.defaultAction();
