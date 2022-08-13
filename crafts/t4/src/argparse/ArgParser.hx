@@ -184,7 +184,7 @@ class ArgParser {
 	}
 
 	private function checkChoiceSpec<T: ArgSpecTrigger, S>(spec: ArgSpec<T, Dynamic>, val: Null<S>, choices: Array<S>, problems: Array<String>) {
-		if (choices.indexOf(val) == -1)
+		if (val != spec.dflt && choices.indexOf(val) == -1)
 			problems.push('Flag "${spec.name()}" got $val, expected one of: ${choices.join(", ")}');
 	}
 
