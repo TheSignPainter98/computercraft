@@ -29,7 +29,6 @@ class Main {
 	public static final NETWORK = new ArgAccessor<String>();
 	public static final MODEM = new ArgAccessor<String>();
 	public static final DEBUG_MODE = new ArgAccessor<Bool>();
-	public static final BIND_MONITOR = new ArgAccessor<Null<String>>();
 	public static final MACHINE = new ArgAccessor<Machine>();
 	public static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
 	public static final SET_AUTO_START = new ArgAccessor<Bool>();
@@ -76,16 +75,6 @@ class Main {
 			}
 		],
 		flags: [
-			{
-				dest: BIND_MONITOR,
-				desc: "Set which display to redirect output into",
-				type: String(DIRECTIONS),
-				dflt: "",
-				trigger: {
-					short: "-D",
-					long: "--display",
-				},
-			},
 			{
 				dest: DEBUG_MODE,
 				desc: "Enable debugging mode (disables some checks)",
@@ -167,12 +156,6 @@ class Main {
 		else
 			deconfigureStartup();
 
-		{
-			final monitor = args[BIND_MONITOR];
-			if (monitor != "")
-				configureMonitor(monitor);
-		}
-
 		final machine = args[MACHINE];
 		var config = new Config(machine);
 
@@ -191,13 +174,6 @@ class Main {
 		final f = FileSystem.open("./startup.lua", OpenFileMode.Write);
 		f.write(hook);
 		f.close();
-	}
-
-	private static function configureMonitor(monitorLoc: String) {
-		final monitor: Monitor = Peripheral.wrap(monitorLoc);
-		monitor.clear();
-		monitor.setCursorPos(0, 0);
-		Term.redirect(cast monitor);
 	}
 
 	private static function deconfigureStartup() {
