@@ -50,7 +50,7 @@ class Server {
 		var rednet = new RednetManager();
 
 		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
-		rednet.host(SERVER_PROTOCOL, args[Main.NETWORK]);
+		rednet.host(SERVER_PROTOCOL, t4Args[Main.NETWORK]);
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
