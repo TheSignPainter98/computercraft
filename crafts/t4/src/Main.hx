@@ -109,7 +109,7 @@ class Main {
 				desc: "Don't use the arguments supplied this invokation in subsequent startups",
 				type: FalseFlag,
 				trigger: {
-					short: "-n",
+					short: "-N",
 					long: "--no-autostart",
 				},
 			},
