@@ -183,6 +183,7 @@ class Main {
 			startup.push([
 				'local display = peripheral.wrap("$display")',
 				'display.clear()',
+				'display.setCursorPos(0, 0)',
 				'term.redirect(display)'
 			].join('\n'));
 		startup.push('shell.run("t4", $fmtdArgs)');
