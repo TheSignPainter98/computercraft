@@ -69,7 +69,7 @@ class Station {
 		if (args == null)
 			return;
 
-		final rednet = new RednetManager();
+		final rednet = new RednetManager(t4Args[Main.VERBOSITY]);
 		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {

@@ -1,5 +1,6 @@
 package server;
 
+import Main.Result;
 import argparse.ArgAccessor;
 import argparse.ArgParser;
 import argparse.Args;
@@ -47,9 +48,14 @@ class Server {
 			return;
 
 		var emitter = new EventEmitter();
-		var rednet = new RednetManager();
+		var rednet = new RednetManager(t4Args[Main.VERBOSITY]);
 
-		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
+		switch (rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE])) {
+			case Err(err):
+				trace(err);
+				return;
+			default:
+		}
 		rednet.host(SERVER_PROTOCOL, t4Args[Main.NETWORK]);
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());

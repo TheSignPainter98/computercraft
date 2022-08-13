@@ -32,7 +32,7 @@ class Main {
 	public static final MACHINE = new ArgAccessor<Machine>();
 	public static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
 	public static final SET_AUTO_START = new ArgAccessor<Bool>();
-	public static final VERBOSE = new ArgAccessor<Array<String>>();
+	public static final VERBOSITY = new ArgAccessor<Verbosity>();
 
 	private static var cliSpec: ProgSpec = {
 		name: "t4",
@@ -114,22 +114,22 @@ class Main {
 				},
 			},
 			{
-				dest: VERBOSE,
+				dest: VERBOSITY,
 				desc: "Output quietly",
 				type: Int(null),
-				dflt: 1,
-				action: ArgAction.storeConst(0),
+				dflt: Verbosity.Normal,
+				action: ArgAction.storeConst(Verbosity.Quiet),
 				trigger: {
 					short: "-q",
 					long: "--quiet",
 				},
 			},
 			{
-				dest: VERBOSE,
+				dest: VERBOSITY,
 				desc: "Output verbosely",
 				type: Int(null),
-				dflt: 1,
-				action: ArgAction.storeConst(2),
+				dflt: Verbosity.Normal,
+				action: ArgAction.storeConst(Verbosity.Verbose),
 				trigger: {
 					short: "-v",
 					long: "--verbose",

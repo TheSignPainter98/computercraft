@@ -35,7 +35,7 @@ class RednetManager {
 	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (HostID, Dynamic) -> Void>>;
 	private var hostedProtocols: Array<HostedProtocol>;
 
-	public function new() {
+	public function new(verbosity:Verbosity) {
 		responses = new Map();
 		hostedProtocols = [];
 	}
