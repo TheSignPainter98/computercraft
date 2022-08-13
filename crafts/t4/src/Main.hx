@@ -24,7 +24,7 @@ class Main {
 	public static final DIRECTIONS = [ "top", "bottom", "left", "right", "front", "back" ];
 
 	public static final NETWORK = new ArgAccessor<String>();
-	private static final MODEM = new ArgAccessor<String>();
+	public static final MODEM = new ArgAccessor<String>();
 	public static final DEBUG_MODE = new ArgAccessor<Bool>();
 	public static final BIND_MONITOR = new ArgAccessor<Null<String>>();
 	public static final MACHINE = new ArgAccessor<Machine>();
