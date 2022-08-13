@@ -70,7 +70,7 @@ class Station {
 			return;
 
 		final rednet = new RednetManager();
-		rednet.open(args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
+		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {
 			case Err(err):
