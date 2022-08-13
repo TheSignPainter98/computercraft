@@ -2,8 +2,11 @@ import argparse.ArgAccessor;
 import argparse.ArgAction;
 import argparse.ArgParser;
 import argparse.ProgSpec;
+import cc.Peripheral;
+import cc.periphs.Monitor;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
+import cc.Term;
 import cc.Vector;
 import haxe.extern.Rest;
 import lua.Lua;
@@ -21,7 +24,7 @@ enum Result {
 class Main {
 	private static inline final ARG_SEP = '';
 
-	public static final DIRECTIONS = [ "top", "bottom", "left", "right", "front", "back" ];
+	public static final DIRECTIONS = ["top", "bottom", "left", "right", "front", "back"];
 
 	public static final NETWORK = new ArgAccessor<String>();
 	public static final MODEM = new ArgAccessor<String>();
@@ -160,9 +163,15 @@ class Main {
 		}
 
 		if (args[SET_AUTO_START])
-			configureStartup(args[BIND_MONITOR]);
+			configureStartup();
 		else
 			deconfigureStartup();
+
+		{
+			final monitor = args[BIND_MONITOR];
+			if (monitor != "")
+				configureMonitor(monitor);
+		}
 
 		final machine = args[MACHINE];
 		var config = new Config(machine);
@@ -174,25 +183,21 @@ class Main {
 		config.save(); // Just in case
 	}
 
-	private static function configureStartup(display: Null<String>) {
-		var args = Sys.args();
-		var fmtdArgs = args.map((s) -> '"${s.gsub(' ', ARG_SEP)}"').join(", ");
+	private static function configureStartup() {
+		final args = Sys.args();
+		final fmtdArgs = args.map((s) -> '"${s.gsub(' ', ARG_SEP)}"').join(", ");
+		final hook = 'shell.run("t4", $fmtdArgs)';
 
-		var startup = [];
-		if (display != "")
-			startup.push([
-				'local display = peripheral.wrap("$display")',
-				'display.clear()',
-				'display.setCursorPos(0, 0)',
-				'term.redirect(display)'
-			].join('\n'));
-		startup.push('shell.run("t4", $fmtdArgs)');
-
-		var slug = startup.join('\n');
-
-		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
-		f.write(slug);
+		final f = FileSystem.open("./startup.lua", OpenFileMode.Write);
+		f.write(hook);
 		f.close();
+	}
+
+	private static function configureMonitor(monitorLoc: String) {
+		final monitor: Monitor = Peripheral.wrap(monitorLoc);
+		monitor.clear();
+		monitor.setCursorPos(0, 0);
+		Term.redirect(cast monitor);
 	}
 
 	private static function deconfigureStartup() {
