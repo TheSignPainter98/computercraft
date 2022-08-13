@@ -57,7 +57,7 @@ class Station {
 			{
 				dest: MODEM,
 				desc: "Where the wireless router is attached",
-				type: String(["top", "bottom", "left", "right", "front", "back"]),
+				type: String(Main.DIRECTIONS),
 				dflt: "top",
 				trigger: {
 					short: "-m",

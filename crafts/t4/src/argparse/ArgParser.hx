@@ -63,11 +63,14 @@ class ArgParser {
 						var dekebabedArg = "-" + arg.charAt(i);
 						var flagSpec = flagMap[dekebabedArg];
 						if (flagSpec != null) {
-							final unskewer = i == arg.length - 1;
+							final unskewer = i < arg.length - 1;
 							if (unskewer)
 								parseable_args.unshift(arg.substr(i + 1));
+							var initialLength = parseable_args.length;
 							parseable_args = flagSpec.tokenise(parseable_args, toks, problems);
-							if (unskewer)
+							if (parseable_args.length != initialLength)
+								break;
+							else if (unskewer)
 								parseable_args.shift();
 						} else {
 							showUsage('Unknown flag: $dekebabedArg');

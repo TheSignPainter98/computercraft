@@ -21,7 +21,10 @@ enum Result {
 class Main {
 	private static inline final ARG_SEP = '';
 
+	public static final DIRECTIONS = [ "top", "bottom", "left", "right", "front", "back" ];
+
 	public static final DEBUG_MODE = new ArgAccessor<Bool>();
+	public static final BIND_MONITOR = new ArgAccessor<Null<String>>();
 	public static final MACHINE = new ArgAccessor<Machine>();
 	public static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
 	public static final SET_AUTO_START = new ArgAccessor<Bool>();
@@ -68,6 +71,16 @@ class Main {
 			}
 		],
 		flags: [
+			{
+				dest: BIND_MONITOR,
+				desc: "Set which display to redirect output into",
+				type: String(DIRECTIONS),
+				dflt: null,
+				trigger: {
+					short: "-d",
+					long: "--display",
+				},
+			},
 			{
 				dest: DEBUG_MODE,
 				desc: "Enable debugging mode (disables some checks)",
@@ -125,7 +138,7 @@ class Main {
 		}
 
 		if (args[SET_AUTO_START])
-			configureStartup();
+			configureStartup(args[BIND_MONITOR]);
 		else
 			deconfigureStartup();
 
@@ -139,13 +152,19 @@ class Main {
 		config.save(); // Just in case
 	}
 
-	private static function configureStartup() {
+	private static function configureStartup(display: Null<String>) {
 		var args = Sys.args();
 		var fmtdArgs = args.map((s) -> '"${s.gsub(' ', ARG_SEP)}"').join(", ");
-		var hook = 'shell.run("t4", $fmtdArgs)';
+
+		var startup = [];
+		if (display != null)
+			startup.push('term.redirect(peripheral.find("$display"))');
+		startup.push('shell.run("t4", $fmtdArgs)');
+
+		var slug = startup.join('\n');
 
 		var f = FileSystem.open("./startup.lua", OpenFileMode.Write);
-		f.write(hook);
+		f.write(slug);
 		f.close();
 	}
 
