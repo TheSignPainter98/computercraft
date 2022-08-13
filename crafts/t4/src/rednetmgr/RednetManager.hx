@@ -131,7 +131,7 @@ class RednetManager {
 			Rednet.close(modem);
 	}
 
-	public function addPacketResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (HostID, T) -> Void) {
+	public function addResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (HostID, T) -> Void) {
 		if (responses[protocol] == null) {
 			responses[protocol] = new Map();
 		}

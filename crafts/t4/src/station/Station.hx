@@ -31,6 +31,10 @@ class StationDecl {
 
 class Station {
 	public static inline final STATION_PROTOCOL = "t4-station";
+	public static inline final STATUS_REQUEST: MessageTag<Void> = "t4-station-request-status";
+	public static inline final STATUS_DECLARE: MessageTag<StationStatus> = "t4-station-declare-status";
+	public static inline final RESOLVE_ID: MessageTag<Option<Int>> = "t4-station-resolve-id";
+	public static inline final RESOLVE_ID_RESPONSE: MessageTag<Int> = "t4-station-id-resolve-response";
 
 	private static final NAME = new ArgAccessor<String>();
 	private static final MODEM = new ArgAccessor<String>();
@@ -68,7 +72,6 @@ class Station {
 	}
 
 	// private static var serverID: Int;
-	private static final rednet = new RednetManager();
 	private static var id: Int;
 	private static var name: Null<String>;
 
@@ -79,29 +82,31 @@ class Station {
 		if (args == null)
 			return;
 
-
+		final rednet = new RednetManager();
 		rednet.open(args[MODEM], t4Args[Main.DEBUG_MODE]);
 
-		switch (init(args, settings)) {
+		switch (init(rednet, args, settings)) {
 			case Err(err):
 				trace(err);
 				return;
 			default:
 		}
 
+		rednet.addResponse(STATION_PROTOCOL, STATUS_REQUEST, (src, _) -> rednet.send(Server.SERVER_PROTOCOL, t4Args[Main.NETWORK], STATUS_DECLARE, status()));
+
 		trace('This station is `$name.\'');
 
 		var emitter = new EventEmitter();
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
-		emitter.addEventListener(EVENT_REDNET_MESSAGE, (e) -> rednet.onRednetMessageEvent);
+		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 
 		emitter.listen();
 
-		deinit();
+		rednet.close();
 	}
 
-	public static function init(args: Args, settings: Config): Result {
+	public static function init(rednet: RednetManager, args: Args, settings: Config): Result {
 		name = args[NAME];
 
 		// Get the location
@@ -112,24 +117,18 @@ class Station {
 			loc;
 		}
 
-		id = switch (negotiateID(settings, location)) {
+		id = switch (negotiateID(rednet, settings, location)) {
 			case Left(err): return Err(err);
 			case Right(id): id;
 		};
 		trace(id);
 
+		rednet.host(STATION_PROTOCOL, stationProtocolHostname(id));
+
 		return Ok;
 	}
 
-	public static function deinit() {
-		rednet.close();
-	}
-
-	private static inline final RESOLVE_ID: MessageTag<Option<Int>> = "t4-station-resolve-id";
-	private static inline final RESOLVE_ID_RESPONSE: MessageTag<Int> = "t4-station-id-resolve-response";
-	private static inline final DECLARE_STATION: MessageTag<StationDecl> = "t4-station-declare";
-
-	public static function negotiateID(options: Config, loc: Point): Either<String, Int> {
+	public static function negotiateID(rednet: RednetManager, options: Config, loc: Point): Either<String, Int> {
 		var initialID = options[ID];
 		final msg = {
 			if (initialID == null)

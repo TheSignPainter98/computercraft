@@ -17,7 +17,6 @@ import rednetmgr.RednetManager;
 class Server {
 	public static inline final SERVER_PROTOCOL = "t4-server";
 
-	private static final NETWORK_NAME = new ArgAccessor<String>();
 	private static final MODEM = new ArgAccessor<String>();
 
 	private static var cliSpec: ProgSpec = {
@@ -40,17 +39,6 @@ class Server {
 			"You should have received a copy of the GNU General Public License",
 			"along with this program.  If not, see <https://www.gnu.org/licenses/>.",
 		],
-		positionals: [
-			{
-				dest: NETWORK_NAME,
-				desc: "The name of the network which this server controls",
-				type: String(null),
-				dflt: "universe",
-				trigger: {
-					metavar: "network",
-				},
-			}
-		],
 		flags: [
 			{
 				dest: MODEM,
@@ -72,26 +60,17 @@ class Server {
 		if (args == null)
 			return;
 
-		init(args, settings);
-
 		var emitter = new EventEmitter();
-		var rednetMgr = new RednetManager();
+		var rednet = new RednetManager();
 
-		rednetMgr.open(args[MODEM], t4Args[Main.DEBUG_MODE]);
+		rednet.open(args[MODEM], t4Args[Main.DEBUG_MODE]);
+		rednet.host(SERVER_PROTOCOL, args[Main.NETWORK]);
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
-		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednetMgr.onRednetMessageEvent);
+		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 
 		emitter.listen();
 
-		deinit(args, settings);
-	}
-
-	private static function init(args: Args, settings: Config) {
-		Rednet.host(SERVER_PROTOCOL, args[NETWORK_NAME]);
-	}
-
-	private static function deinit(args: Args, settings: Config) {
-		Rednet.unhost(SERVER_PROTOCOL, args[NETWORK_NAME]);
+		rednet.close();
 	}
 }
