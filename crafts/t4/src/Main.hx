@@ -75,9 +75,9 @@ class Main {
 				dest: BIND_MONITOR,
 				desc: "Set which display to redirect output into",
 				type: String(DIRECTIONS),
-				dflt: null,
+				dflt: "",
 				trigger: {
-					short: "-d",
+					short: "-D",
 					long: "--display",
 				},
 			},
@@ -157,7 +157,7 @@ class Main {
 		var fmtdArgs = args.map((s) -> '"${s.gsub(' ', ARG_SEP)}"').join(", ");
 
 		var startup = [];
-		if (display != null)
+		if (display != "")
 			startup.push('term.redirect(peripheral.find("$display"))');
 		startup.push('shell.run("t4", $fmtdArgs)');
 
