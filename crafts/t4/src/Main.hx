@@ -160,7 +160,7 @@ class Main {
 
 		switch (machine.exec(args, config)) {
 			case Failure(err):
-				Logger.error(err);
+				Logger.err(err);
 			default:
 		}
 
