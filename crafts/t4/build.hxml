@@ -4,4 +4,5 @@
 -D lua-vanilla
 --lua t4
 -L cctweaked
+-L extype
 --dce full

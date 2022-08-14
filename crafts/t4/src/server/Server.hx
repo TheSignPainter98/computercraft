@@ -1,6 +1,5 @@
 package server;
 
-import Main.Result;
 import argparse.ArgAccessor;
 import argparse.ArgParser;
 import argparse.Args;
@@ -13,6 +12,10 @@ import events.CustomEvent.EVENT_SAVE_INVALIDATED;
 import events.OSEvent.EVENT_REDNET_MESSAGE;
 import events.OSEvent.EVENT_TERMINATE;
 import events.OSEvent.RednetMessageEvent;
+import extype.Result;
+import extype.Unit;
+import extype.Unit._;
+import logger.Logger;
 import rednetmgr.RednetManager;
 
 class Server {
@@ -40,20 +43,18 @@ class Server {
 		],
 	}
 
-	public static function main(t4Args: Args, settings: Config) {
+	public static function main(t4Args: Args, settings: Config) : Result<Unit, String> {
 		Logger.log("I am a server.");
 
 		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
 		if (args == null)
-			return;
+			return Failure("Failed to parse args");
 
 		var emitter = new EventEmitter();
 		var rednet = new RednetManager();
 
 		switch (rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE])) {
-			case Err(err):
-				Logger.log(err);
-				return;
+			case Failure(err): return Failure(err);
 			default:
 		}
 		rednet.host(SERVER_PROTOCOL, t4Args[Main.NETWORK]);
@@ -64,5 +65,7 @@ class Server {
 		emitter.listen();
 
 		rednet.close();
+
+		return Success(_);
 	}
 }

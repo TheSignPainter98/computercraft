@@ -7,6 +7,8 @@ import server.Server;
 import station.Station;
 import signal.Signal;
 import yard.Yard;
+import extype.Result;
+import extype.Unit;
 
 @:enum
 abstract Machine(String) from String to String {
@@ -16,8 +18,8 @@ abstract Machine(String) from String to String {
 	var MachineStation = 'station';
 	var MachineYard = 'yard';
 
-	public inline function exec(parentArgs: Args, settings: Config) {
-		switch (this) {
+	public inline function exec(parentArgs: Args, settings: Config): Result<Unit, String> {
+		return switch (this) {
 			case MachineDisplay:
 				Display.main(parentArgs, settings);
 			case MachineServer:
@@ -29,7 +31,7 @@ abstract Machine(String) from String to String {
 			case MachineYard:
 				Yard.main(parentArgs, settings);
 			default:
-				Logger.err('Er, you shouldn\'t be able to see this... no such machine $this?!');
+				Failure('Er, you shouldn\'t be able to see this... no such machine $this?!');
 		}
 	}
 }

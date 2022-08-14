@@ -13,7 +13,6 @@ import events.EventEmitter;
 import events.CustomEvent.EVENT_SAVE_INVALIDATED;
 import events.OSEvent.EVENT_REDNET_MESSAGE;
 import haxe.ds.Option;
-import haxe.ds.Either;
 import haxe.Exception;
 import lua.Table;
 import server.Server;
@@ -21,7 +20,10 @@ import rednetmgr.MessageTag;
 import rednetmgr.Packet.StationToServerPacket;
 import rednetmgr.RednetManager;
 import location.Point;
-import Main.Result;
+import logger.Logger;
+import extype.Result;
+import extype.Unit;
+import extype.Unit._;
 
 @:structInit
 class StationDecl {
@@ -62,20 +64,18 @@ class Station {
 	private static var id: Int;
 	private static var name: Null<String>;
 
-	public static function main(t4Args: Args, settings: Config) {
+	public static function main(t4Args: Args, settings: Config): Result<Unit, String> {
 		Logger.log("I am a station");
 
 		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
 		if (args == null)
-			return;
+			return Failure("Failed to parse args");
 
 		final rednet = new RednetManager();
 		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {
-			case Err(err):
-				Logger.log(err);
-				return;
+			case Failure(err): return Failure(err);
 			default:
 		}
 
@@ -91,31 +91,33 @@ class Station {
 		emitter.listen();
 
 		rednet.close();
+
+		return Success(_);
 	}
 
-	public static function init(rednet: RednetManager, args: Args, settings: Config): Result {
+	public static function init(rednet: RednetManager, args: Args, settings: Config): Result<Unit, String> {
 		name = args[NAME];
 
 		// Get the location
 		final location = {
 			final loc = GPS.locate();
 			if (loc == null)
-				return Err('Failed to trilaterate location');
+				return Failure('Failed to trilaterate location');
 			loc;
 		}
 
 		id = switch (negotiateID(rednet, settings, location)) {
-			case Left(err): return Err(err);
-			case Right(id): id;
+			case Success(id): id;
+			case Failure(err): return Failure(err);
 		};
 		Logger.log('Received ID: $id');
 
 		rednet.host(STATION_PROTOCOL, stationProtocolHostname(id));
 
-		return Ok;
+		return Success(_);
 	}
 
-	public static function negotiateID(rednet: RednetManager, options: Config, loc: Point): Either<String, Int> {
+	public static function negotiateID(rednet: RednetManager, options: Config, loc: Point): Result<Int, String> {
 		var initialID = options[ID];
 		final msg = {
 			if (initialID == null)
@@ -124,16 +126,15 @@ class Station {
 				Some(initialID);
 		}
 		switch (rednet.send(Server.SERVER_PROTOCOL, null, RESOLVE_ID, msg)) {
-			case Err(e):
-				return Left(e);
+			case Failure(e): return Failure(e);
 			default:
 		}
 
 		return switch (rednet.receive(Server.SERVER_PROTOCOL, RESOLVE_ID_RESPONSE)) {
-			case Left(err): Left(err);
-			case Right(id):
+			case Success(id):
 				options[ID] = id;
-				return Right(id);
+				return Success(id);
+			case Failure(err): Failure(err);
 		}
 	}
 

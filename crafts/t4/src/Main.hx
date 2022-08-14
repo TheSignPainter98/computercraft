@@ -18,11 +18,6 @@ import logger.Verbosity;
 
 using lua.NativeStringTools;
 
-enum Result {
-	Ok;
-	Err(err: String);
-}
-
 class Main {
 	private static inline final ARG_SEP = '';
 

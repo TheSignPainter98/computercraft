@@ -5,11 +5,12 @@ import cc.periphs.Modem;
 import cc.Peripheral;
 import cc.Rednet;
 import logger.Logger;
-import Main.Result;
 import haxe.Exception;
-import haxe.ds.Either;
 import haxe.ds.Option;
 import events.OSEvent.RednetMessageEvent;
+import extype.Result;
+import extype.Unit;
+import extype.Unit._;
 
 typedef Protocol = String;
 typedef Host = String;
@@ -41,44 +42,44 @@ class RednetManager {
 		hostedProtocols = [];
 	}
 
-	public function open(modemName: String, ?debugMode: Bool): Result {
+	public function open(modemName: String, ?debugMode: Bool): Result<Unit, String> {
 		if (rednetIsReady().match(None))
-			return Ok;
+			return Success(_);
 
 		Logger.log('Opening rednet on $modemName');
 
 		{
 			final m: Modem = Peripheral.wrap(modemName);
 			if (m == null)
-				return Err('No wireless modem attached at $modemName');
+				return Failure('No wireless modem attached at $modemName');
 			if (!(m.isWireless() || debugMode))
-				return Err('Modem $modemName is not wireless');
+				return Failure('Modem $modemName is not wireless');
 		}
 
 		modem = modemName;
 		Rednet.open(modem);
 
 		if (!Rednet.isOpen(modem))
-			return Err('Failed to open connection with modem "$modem"');
+			return Failure('Failed to open connection with modem "$modem"');
 
 		Logger.log('Connection open on $modem');
 
-		return Ok;
+		return Success(_);
 	}
 
-	public function host(protocol, host): Result {
+	public function host(protocol, host): Result<Unit, String> {
 		if (modem == null)
-			return Err("Modem connection must be opened before hosting may begin");
+			return Failure("Modem connection must be opened before hosting may begin");
 		Rednet.host(protocol, host);
 		Logger.verbose('Now hosting $protocol/$host');
 		hostedProtocols.push({protocol: protocol, host: host});
-		return Ok;
+		return Success(_);
 	}
 
-	public function sendDirect<T>(recipient: Int, protocol: Protocol, tag: MessageTag<T>, msg: T): Result {
+	public function sendDirect<T>(recipient: Int, protocol: Protocol, tag: MessageTag<T>, msg: T): Result<Unit, String> {
 		switch (rednetIsReady()) {
 			case Some(err):
-				return Err(err);
+				return Failure(err);
 			default:
 		}
 
@@ -91,23 +92,23 @@ class RednetManager {
 		Logger.verbose('Message is: $msg');
 		Rednet.send(recipient, pkt, protocol);
 
-		return Ok;
+		return Success(_);
 	}
 
-	public function send<T>(protocol: Protocol, host: Null<Host>, tag: MessageTag<T>, msg: T): Result {
+	public function send<T>(protocol: Protocol, host: Null<Host>, tag: MessageTag<T>, msg: T): Result<Unit, String> {
 		// DNS lookup
 		final hosts = Rednet.lookup(protocol, host);
 		final hostID = hosts[0];
 		if (hostID == null)
-			return Err('No host found for protocol $protocol');
+			return Failure('No host found for protocol $protocol');
 
 		return sendDirect(hostID, protocol, tag, msg);
 	}
 
-	public function broadcast<T>(protocol: Protocol, tag: MessageTag<T>, msg: T): Result {
+	public function broadcast<T>(protocol: Protocol, tag: MessageTag<T>, msg: T): Result<Unit, String> {
 		switch (rednetIsReady()) {
 			case Some(err):
-				return Err(err);
+				return Failure(err);
 			default:
 		}
 
@@ -121,7 +122,7 @@ class RednetManager {
 
 		Rednet.broadcast(pkt, protocol);
 
-		return Ok;
+		return Success(_);
 	}
 
 	private function rednetIsReady(): Option<String> {
@@ -152,10 +153,10 @@ class RednetManager {
 		responses[protocol][tag] = listener;
 	}
 
-	public function receive<T>(protocol: Protocol, expectedTag: MessageTag<T>, maxAttempts = MAX_RETRIES): Either<String, T> {
+	public function receive<T>(protocol: Protocol, expectedTag: MessageTag<T>, maxAttempts = MAX_RETRIES): Result<T, String> {
 		switch (rednetIsReady()) {
 			case Some(err):
-				return Left(err);
+				return Failure(err);
 			default:
 		}
 
@@ -168,23 +169,27 @@ class RednetManager {
 				}
 
 			if (!knownProto)
-				return Left('Protocol "$protocol" is unknown to this rednet manager and hence may never be received');
+				return Failure('Protocol "$protocol" is unknown to this rednet manager and hence may never be received');
 		}
 
 		final recvd: Packet<T> = {
 			var raw: Null<ReceivedMessage<Packet<Dynamic>>> = null;
 			for (i in 1...1 + maxAttempts) {
-				raw = Rednet.receive(protocol);
-				if (raw.message.tag == expectedTag)
+				final candidate: ReceivedMessage<Packet<Dynamic>> = Rednet.receive(protocol);
+				if (candidate.message.tag == expectedTag) {
+					raw = candidate;
 					break;
+				}
 				else
-					onRednetMessage(raw.protocol, raw.senderID, raw.message);
+					onRednetMessage(candidate.protocol, candidate.senderID, candidate.message);
 			}
+			if (raw == null)
+				return Failure('Failed to receive message from $protocol: no matching $expectedTag packets after $maxAttempts packets');
 			ComputerCraft.sleep(RETRY_INTERVAL);
 			cast raw.message;
 		}
 
-		return Right(recvd.payload);
+		return Success(recvd.payload);
 	}
 
 	public function onRednetMessageEvent(e: RednetMessageEvent) {
