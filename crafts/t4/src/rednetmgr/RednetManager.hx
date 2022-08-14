@@ -98,7 +98,7 @@ class RednetManager {
 	public function send<T>(protocol: Protocol, host: Null<Host>, tag: MessageTag<T>, msg: T): Result<Unit, String> {
 		// DNS lookup
 		final hosts = Rednet.lookup(protocol, host);
-		final hostID = hosts[0];
+		final hostID = hosts[1];
 		if (hostID == null)
 			return Failure('No host found for protocol $protocol');
 
