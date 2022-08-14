@@ -3,6 +3,7 @@ package machine;
 import argparse.Args;
 import config.Config;
 import display.Display;
+import gpshost.GPSHost;
 import server.Server;
 import station.Station;
 import extype.Result;
@@ -11,6 +12,7 @@ import extype.Unit;
 @:enum
 abstract Machine(String) from String to String {
 	var MachineDisplay = 'display';
+	var MachineGPSHost = 'gps';
 	var MachineServer = 'server';
 	var MachineStation = 'station';
 
@@ -18,6 +20,8 @@ abstract Machine(String) from String to String {
 		return switch (this) {
 			case MachineDisplay:
 				Display.main(parentArgs, settings);
+			case MachineGPSHost:
+				GPSHost.main(parentArgs, settings);
 			case MachineServer:
 				Server.main(parentArgs, settings);
 			case MachineStation:
