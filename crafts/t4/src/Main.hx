@@ -63,7 +63,7 @@ class Main {
 			{
 				dest: MACHINE_ARGS,
 				desc: "The arguments to pass to the machine",
-				type: List(String(null), AtLeast(0)),
+				type: List(String(null), false),
 				dflt: [],
 				trigger: {
 					metavar: "args",

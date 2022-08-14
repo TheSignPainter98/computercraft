@@ -9,12 +9,21 @@ import extype.Result;
 import extype.Unit;
 import extype.Unit._;
 
-class GPSHost {
-	private static var X = new ArgAccessor<Int>();
-	private static var Y = new ArgAccessor<Int>();
-	private static var Z = new ArgAccessor<Int>();
+private abstract Position(Array<String>) from Array<String> {
+	private static final fieldMap = ["x" => 0, "y" => 1, "z" => 2];
 
-	private static final UNSPECIFIED = 0xdeadbeef;
+	@:op(a.b)
+	public function get(field: String): Null<String> {
+		final idx = fieldMap[field];
+		if (idx == null)
+			return null;
+
+		return this[idx];
+	}
+}
+
+class GPSHost {
+	private static var POSITION = new ArgAccessor<Position>();
 
 	private static final cliSpec: ProgSpec = {
 		name: "t4-gps",
@@ -38,27 +47,12 @@ class GPSHost {
 		],
 		positionals: [
 			{
-				dest: X,
-				desc: "The x-location of this host",
-				type: Int(null),
+				dest: POSITION,
+				desc: "The position of the host (three integers)",
+				type: List(String(null), true),
 				trigger: {
-					metavar: "x",
-				}
-			},
-			{
-				dest: Y,
-				desc: "The y-location of this host",
-				type: Int(null),
-				trigger: {
-					metavar: "y",
-				}
-			},
-			{
-				dest: Z,
-				desc: "The z-location of this host",
-				type: Int(null),
-				trigger: {
-					metavar: "z",
+					metavar: "position",
+					howMany: Exactly(3),
 				}
 			},
 		],
@@ -69,7 +63,9 @@ class GPSHost {
 		if (args == null)
 			return Failure("Failed to parse args");
 
-		Shell.run('gps', 'host', Std.string(args[X]), Std.string(args[Y]), Std.string(args[Z]));
+		final position = args[POSITION];
+
+		Shell.run('gps', 'host', position.x, position.y, position.z);
 
 		return Success(_);
 	}

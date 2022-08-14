@@ -64,6 +64,16 @@ class ArgAction {
 		}
 	}
 
+	public static function storeList(verbatim = false): RawArgList->ParserFragmentResult<Array<String>> {
+		return (raw) -> {
+			final toParse: RawArgList = if (verbatim) switch (raw) {
+				case Parseable(l): Verbatim(l);
+				case Verbatim(_): raw;
+			} else raw;
+			return storeAtLeastNStrings(0)(toParse);
+		}
+	}
+
 	public static function storeAtLeastNStrings(n: Int): RawArgList->ParserFragmentResult<Array<String>> {
 		return (raw) -> {
 			switch (raw) {

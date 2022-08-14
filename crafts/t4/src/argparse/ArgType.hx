@@ -6,7 +6,7 @@ enum ArgTypeImpl {
 	String(choices: Null<Array<String>>);
 	Int(choices: Null<Array<Int>>);
 	Float(choices: Null<Array<Float>>);
-	List(type: ArgType, count: ListCount);
+	List(type: ArgType, verbatim: Bool);
 }
 
 abstract ArgType(ArgTypeImpl) from ArgTypeImpl to ArgTypeImpl {
@@ -17,11 +17,7 @@ abstract ArgType(ArgTypeImpl) from ArgTypeImpl to ArgTypeImpl {
 			case String(_): cast ArgAction.storeString;
 			case Int(_): cast ArgAction.storeInt;
 			case Float(_): cast ArgAction.storeFloat;
-			case List(_, count):
-				switch (count) {
-					case AtLeast(n): cast ArgAction.storeAtLeastNStrings(n);
-					case Exactly(n): cast ArgAction.storeExactlyNStrings(n);
-				}
+			case List(_, verbatim): cast ArgAction.storeList(verbatim);
 		}
 	}
 }
