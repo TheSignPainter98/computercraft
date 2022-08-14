@@ -34,7 +34,7 @@ class RednetManager {
 
 	private static var modem: Null<String>;
 
-	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (HostID, Dynamic) -> Void>>;
+	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (Dynamic, HostID) -> Void>>;
 	private var hostedProtocols: Array<HostedProtocol>;
 
 	public function new() {
@@ -146,7 +146,7 @@ class RednetManager {
 		}
 	}
 
-	public function addResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (HostID, T) -> Void) {
+	public function addResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (T, HostID) -> Void) {
 		if (responses[protocol] == null) {
 			responses[protocol] = new Map();
 		}
@@ -203,5 +203,15 @@ class RednetManager {
 
 	private function onRednetMessage<T>(protocol: Protocol, senderID: Int, pkt: Packet<T>) {
 		Logger.log('Gotten rednet message with protocol $protocol/$senderID: $pkt');
+
+		final protocolResponses = responses[protocol];
+		if (protocolResponses == null)
+			return;
+
+		final tagResponse = protocolResponses[pkt.tag];
+		if (tagResponse == null)
+			return;
+
+		tagResponse(pkt.payload, senderID);
 	}
 }

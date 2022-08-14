@@ -79,7 +79,7 @@ class Station {
 			default:
 		}
 
-		rednet.addResponse(STATION_PROTOCOL, STATUS_REQUEST, (src, _) -> rednet.send(Server.SERVER_PROTOCOL, t4Args[Main.NETWORK], STATUS_DECLARE, status()));
+		rednet.addResponse(STATION_PROTOCOL, STATUS_REQUEST, (_, _) -> rednet.send(Server.SERVER_PROTOCOL, t4Args[Main.NETWORK], STATUS_DECLARE, status()));
 
 		Logger.log('This station is `$name.\'');
 
