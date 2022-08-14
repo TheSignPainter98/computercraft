@@ -1,5 +1,6 @@
 package logger;
 
+import lua.Lua;
 import haxe.Rest;
 
 class Logger {
@@ -17,15 +18,19 @@ class Logger {
 
 	public static function verbose(msg: Rest<Dynamic>) {
 		if (verbosity >= Verbose)
-			trace(msg);
+			_log(msg);
 	}
 
 	public static function log(msg: Rest<Dynamic>) {
 		if (verbosity >= Normal)
-			trace(msg);
+			_log(msg);
 	}
 
 	public static function err(msg: Rest<Dynamic>) {
-		trace(msg);
+		_log(msg);
+	}
+
+	private static function _log(msg: Array<Dynamic>) {
+		Lua.print([ for (part in msg) Std.string(part) ].join(' '));
 	}
 }
