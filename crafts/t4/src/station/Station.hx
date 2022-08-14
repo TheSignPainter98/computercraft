@@ -75,7 +75,8 @@ class Station {
 		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {
-			case Failure(err): return Failure(err);
+			case Failure(err):
+				return Failure(err);
 			default:
 		}
 
@@ -129,7 +130,8 @@ class Station {
 				Some(initialID);
 		}
 		switch (rednet.send(Server.SERVER_PROTOCOL, null, RESOLVE_ID, msg)) {
-			case Failure(e): return Failure(e);
+			case Failure(e):
+				return Failure(e);
 			default:
 		}
 

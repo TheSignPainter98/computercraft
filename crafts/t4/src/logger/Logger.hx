@@ -3,7 +3,8 @@ package logger;
 import haxe.Rest;
 
 class Logger {
-	@:isVar public static var verbosity(get, set): Verbosity;
+	@:isVar
+	public static var verbosity(get, set): Verbosity;
 
 	public static inline function set_verbosity(v: Verbosity): Verbosity {
 		verbosity = v;

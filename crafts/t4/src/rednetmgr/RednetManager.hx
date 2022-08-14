@@ -179,8 +179,7 @@ class RednetManager {
 				if (candidate.message.tag == expectedTag) {
 					raw = candidate;
 					break;
-				}
-				else
+				} else
 					onRednetMessage(candidate.protocol, candidate.senderID, candidate.message);
 			}
 			if (raw == null)

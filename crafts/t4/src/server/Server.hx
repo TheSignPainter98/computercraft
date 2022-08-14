@@ -43,7 +43,7 @@ class Server {
 		],
 	}
 
-	public static function main(t4Args: Args, settings: Config) : Result<Unit, String> {
+	public static function main(t4Args: Args, settings: Config): Result<Unit, String> {
 		Logger.log("I am a server.");
 
 		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
@@ -54,7 +54,8 @@ class Server {
 		var rednet = new RednetManager();
 
 		switch (rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE])) {
-			case Failure(err): return Failure(err);
+			case Failure(err):
+				return Failure(err);
 			default:
 		}
 		rednet.host(SERVER_PROTOCOL, t4Args[Main.NETWORK]);
