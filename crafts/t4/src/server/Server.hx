@@ -41,18 +41,18 @@ class Server {
 	}
 
 	public static function main(t4Args: Args, settings: Config) {
-		trace("I am a server.");
+		Logger.log("I am a server.");
 
 		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
 		if (args == null)
 			return;
 
 		var emitter = new EventEmitter();
-		var rednet = new RednetManager(t4Args[Main.VERBOSITY]);
+		var rednet = new RednetManager();
 
 		switch (rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE])) {
 			case Err(err):
-				trace(err);
+				Logger.log(err);
 				return;
 			default:
 		}

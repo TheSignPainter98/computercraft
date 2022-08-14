@@ -13,6 +13,8 @@ import lua.Lua;
 import lua.Table;
 import machine.Machine;
 import config.Config;
+import logger.Logger;
+import logger.Verbosity;
 
 using lua.NativeStringTools;
 
@@ -32,7 +34,7 @@ class Main {
 	public static final MACHINE = new ArgAccessor<Machine>();
 	public static final MACHINE_ARGS = new ArgAccessor<Array<String>>();
 	public static final SET_AUTO_START = new ArgAccessor<Bool>();
-	public static final VERBOSITY = new ArgAccessor<Verbosity>();
+	private static final VERBOSITY = new ArgAccessor<Verbosity>();
 
 	private static var cliSpec: ProgSpec = {
 		name: "t4",
@@ -151,6 +153,8 @@ class Main {
 			return;
 		}
 
+		Logger.verbosity = args[VERBOSITY];
+
 		if (args[SET_AUTO_START])
 			configureStartup();
 		else
@@ -161,7 +165,7 @@ class Main {
 
 		machine.exec(args, config);
 
-		trace("Good night");
+		Logger.log("Good night");
 
 		config.save(); // Just in case
 	}

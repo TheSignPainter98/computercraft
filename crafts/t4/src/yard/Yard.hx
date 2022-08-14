@@ -10,7 +10,7 @@ import events.OSEvent.EVENT_TERMINATE;
 
 class Yard {
 	public static function main(args: Args, settings: Config) {
-		trace("I am a yard.");
+		Logger.log("I am a yard.");
 
 		var emitter = new EventEmitter();
 

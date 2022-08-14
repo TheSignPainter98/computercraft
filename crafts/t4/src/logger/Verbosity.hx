@@ -1,3 +1,5 @@
+package logger;
+
 @:enum
 abstract Verbosity(Int) from Int to Int {
 	var Quiet = 0;

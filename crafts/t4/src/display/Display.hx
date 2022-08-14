@@ -10,7 +10,7 @@ import events.OSEvent.EVENT_TERMINATE;
 
 class Display {
 	public static function main(args: Args, settings: Config) {
-		trace("I am a display.");
+		Logger.log("I am a display.");
 
 		var emitter = new EventEmitter();
 

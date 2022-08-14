@@ -29,7 +29,7 @@ abstract Machine(String) from String to String {
 			case MachineYard:
 				Yard.main(parentArgs, settings);
 			default:
-				trace("Er, you shouldn't be able to see this...");
+				Logger.err('Er, you shouldn\'t be able to see this... no such machine $this?!');
 		}
 	}
 }

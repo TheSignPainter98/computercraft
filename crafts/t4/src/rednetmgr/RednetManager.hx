@@ -4,6 +4,7 @@ import cc.ComputerCraft;
 import cc.periphs.Modem;
 import cc.Peripheral;
 import cc.Rednet;
+import logger.Logger;
 import Main.Result;
 import haxe.Exception;
 import haxe.ds.Either;
@@ -32,22 +33,19 @@ class RednetManager {
 
 	private static var modem: Null<String>;
 
-	private var verbosity: Verbosity;
 	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (HostID, Dynamic) -> Void>>;
 	private var hostedProtocols: Array<HostedProtocol>;
 
-	public function new(verbosity: Verbosity) {
+	public function new() {
 		responses = new Map();
 		hostedProtocols = [];
-		this.verbosity = verbosity;
 	}
 
 	public function open(modemName: String, ?debugMode: Bool): Result {
 		if (rednetIsReady().match(None))
 			return Ok;
 
-		if (verbosity >= Verbosity.Normal)
-			trace('Opening rednet on $modemName...');
+		Logger.log('Opening rednet on $modemName');
 
 		{
 			final m: Modem = Peripheral.wrap(modemName);
@@ -63,6 +61,8 @@ class RednetManager {
 		if (!Rednet.isOpen(modem))
 			return Err('Failed to open connection with modem "$modem"');
 
+		Logger.log('Connection open on $modem');
+
 		return Ok;
 	}
 
@@ -70,8 +70,7 @@ class RednetManager {
 		if (modem == null)
 			return Err("Modem connection must be opened before hosting may begin");
 		Rednet.host(protocol, host);
-		if (verbosity >= Verbosity.Verbose)
-			trace('Now hosting $protocol/$host');
+		Logger.verbose('Now hosting $protocol/$host');
 		hostedProtocols.push({protocol: protocol, host: host});
 		return Ok;
 	}
@@ -88,10 +87,8 @@ class RednetManager {
 			payload: msg,
 		};
 
-		if (verbosity >= Verbosity.Verbose)
-			trace('Sending to $protocol/$recipient a $tag');
-		else if (verbosity >= Verbosity.Normal)
-			trace('Sending to $protocol/$recipient a $tag: $msg');
+		Logger.log('Sending to $protocol/$recipient a $tag');
+		Logger.verbose('Message is: $msg');
 		Rednet.send(recipient, pkt, protocol);
 
 		return Ok;
@@ -119,10 +116,8 @@ class RednetManager {
 			payload: msg,
 		}
 
-		if (verbosity >= Verbosity.Verbose)
-			trace('Broadcasting on protocol $protocol a $tag');
-		else if (verbosity >= Verbosity.Normal)
-			trace('Broadcasting on protocol $protocol a $tag: $msg');
+		Logger.log('Broadcasting on protocol $protocol a $tag');
+		Logger.verbose('Broadcasting: $msg');
 
 		Rednet.broadcast(pkt, protocol);
 
@@ -144,8 +139,7 @@ class RednetManager {
 
 	public function close() {
 		if (modem != null) {
-			if (verbosity >= Verbosity.Normal)
-				trace('Closing rednet on $modem');
+			Logger.log('Closing rednet on $modem');
 			Rednet.close(modem);
 			modem = null;
 		}
@@ -196,15 +190,13 @@ class RednetManager {
 	public function onRednetMessageEvent(e: RednetMessageEvent) {
 		if (e == null)
 			return;
-		if (verbosity >= Verbosity.Normal)
-			trace('Got a rednet event from ${e.protocol}/${e.id}');
-		if (verbosity >= Verbosity.Verbose)
-			trace('Got a rednet event from ${e.protocol}/${e.id}: ${e.message}');
+		Logger.log('Got a rednet event from ${e.protocol}/${e.id}');
+		Logger.verbose('Message is: ${e.message}');
 
 		onRednetMessage(e.protocol, e.id, e.message);
 	}
 
 	private function onRednetMessage<T>(protocol: Protocol, senderID: Int, pkt: Packet<T>) {
-		trace('Gotten rednet message with protocol $protocol/$senderID: $pkt');
+		Logger.log('Gotten rednet message with protocol $protocol/$senderID: $pkt');
 	}
 }

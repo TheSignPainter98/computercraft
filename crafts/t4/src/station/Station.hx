@@ -63,25 +63,25 @@ class Station {
 	private static var name: Null<String>;
 
 	public static function main(t4Args: Args, settings: Config) {
-		trace("I am a station");
+		Logger.log("I am a station");
 
 		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
 		if (args == null)
 			return;
 
-		final rednet = new RednetManager(t4Args[Main.VERBOSITY]);
+		final rednet = new RednetManager();
 		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {
 			case Err(err):
-				trace(err);
+				Logger.log(err);
 				return;
 			default:
 		}
 
 		rednet.addResponse(STATION_PROTOCOL, STATUS_REQUEST, (src, _) -> rednet.send(Server.SERVER_PROTOCOL, t4Args[Main.NETWORK], STATUS_DECLARE, status()));
 
-		trace('This station is `$name.\'');
+		Logger.log('This station is `$name.\'');
 
 		var emitter = new EventEmitter();
 
@@ -108,7 +108,7 @@ class Station {
 			case Left(err): return Err(err);
 			case Right(id): id;
 		};
-		trace(id);
+		Logger.log('Received ID: $id');
 
 		rednet.host(STATION_PROTOCOL, stationProtocolHostname(id));
 
