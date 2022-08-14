@@ -55,7 +55,7 @@ class Main {
 			{
 				dest: MACHINE,
 				desc: "The type of machine this computer represents",
-				type: String([MachineDisplay, MachineServer, MachineSignal, MachineStation, MachineYard]),
+				type: String([MachineDisplay, MachineGPSHost, MachineServer, MachineStation]),
 				trigger: {
 					metavar: "machine",
 				},
