@@ -100,7 +100,7 @@ class Station {
 
 		// Get the location
 		final location = {
-			final loc = GPS.locate();
+			final loc: Null<GPSLocation> = GPS.locate();
 			if (loc == null)
 				return Failure('Failed to trilaterate location');
 			loc;
