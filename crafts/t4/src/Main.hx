@@ -158,7 +158,11 @@ class Main {
 		final machine = args[MACHINE];
 		var config = new Config(machine);
 
-		machine.exec(args, config);
+		switch (machine.exec(args, config)) {
+			case Failure(err):
+				Logger.error(err);
+			default:
+		}
 
 		Logger.log("Good night");
 
