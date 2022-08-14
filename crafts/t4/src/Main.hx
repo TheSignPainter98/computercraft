@@ -6,6 +6,7 @@ import cc.Peripheral;
 import cc.periphs.Monitor;
 import cc.FileSystem.OpenFileMode;
 import cc.FileSystem;
+import cc.OS;
 import cc.Term;
 import cc.Vector;
 import haxe.extern.Rest;
@@ -157,6 +158,8 @@ class Main {
 
 		final machine = args[MACHINE];
 		var config = new Config(machine);
+
+		Logger.log('This is t4 running on computer ID: #${OS.getComputerID()}');
 
 		switch (machine.exec(args, config)) {
 			case Failure(err):
