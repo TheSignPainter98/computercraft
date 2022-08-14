@@ -103,6 +103,9 @@ class Station {
 			final loc: Null<GPSLocation> = GPS.locate();
 			if (loc == null)
 				return Failure('Failed to trilaterate location');
+			for (axis in ['x', 'y', 'z'])
+				if (Reflect.field(loc, axis) == null)
+					return Failure('Failed to trilaterate location');
 			loc;
 		}
 
