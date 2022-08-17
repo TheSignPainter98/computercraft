@@ -31,6 +31,6 @@ class Logger {
 	}
 
 	private static function _log(msg: Array<Dynamic>) {
-		Lua.print([ for (part in msg) Std.string(part) ].join(' '));
+		Lua.print([for (part in msg) Std.string(part)].join(' '));
 	}
 }

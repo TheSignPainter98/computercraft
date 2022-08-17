@@ -25,18 +25,13 @@ import extype.Result;
 import extype.Unit;
 import extype.Unit._;
 
-@:structInit
-class StationDecl {
-	public final stationID: Int;
-	public final location: Point;
-}
-
 class Station {
 	public static inline final STATION_PROTOCOL = "t4-station";
 	public static inline final STATUS_REQUEST: MessageTag<Void> = "t4-station-request-status";
 	public static inline final STATUS_DECLARE: MessageTag<StationStatus> = "t4-station-declare-status";
-	public static inline final RESOLVE_ID: MessageTag<Option<Int>> = "t4-station-resolve-id";
+	public static inline final RESOLVE_ID: MessageTag<StationDeclaration> = "t4-station-resolve-id";
 	public static inline final RESOLVE_ID_RESPONSE: MessageTag<Int> = "t4-station-id-resolve-response";
+	public static inline final PULSE: MessageTag<Unit> = "t4-station-pulse";
 
 	private static final NAME = new ArgAccessor<String>();
 
@@ -80,7 +75,7 @@ class Station {
 			default:
 		}
 
-		rednet.addResponse(STATION_PROTOCOL, STATUS_REQUEST, (_, _) -> rednet.send(Server.SERVER_PROTOCOL, t4Args[Main.NETWORK], STATUS_DECLARE, status()));
+		rednet.addResponse(STATION_PROTOCOL, STATUS_REQUEST, (_, _) -> rednet.send(STATION_PROTOCOL, t4Args[Main.NETWORK], STATUS_DECLARE, status()));
 
 		Logger.log('This station is `$name.\'');
 
@@ -110,7 +105,7 @@ class Station {
 			loc;
 		}
 
-		id = switch (negotiateID(rednet, settings, location)) {
+		id = switch (negotiateID(rednet, settings, name)) {
 			case Success(id): id;
 			case Failure(err): return Failure(err);
 		};
@@ -121,25 +116,19 @@ class Station {
 		return Success(_);
 	}
 
-	public static function negotiateID(rednet: RednetManager, options: Config, loc: Point): Result<Int, String> {
+	public static function negotiateID(rednet: RednetManager, options: Config, name: String): Result<Int, String> {
 		var initialID = options[ID];
-		final msg = {
-			if (initialID == null)
-				None
-			else
-				Some(initialID);
-		}
-		switch (rednet.send(Server.SERVER_PROTOCOL, null, RESOLVE_ID, msg)) {
-			case Failure(e):
-				return Failure(e);
-			default:
-		}
+		final hint: StationDeclaration = {
+			name: name,
+			idSuggestion: if (initialID == null) None else Some(initialID),
+		};
 
-		return switch (rednet.receive(Server.SERVER_PROTOCOL, RESOLVE_ID_RESPONSE)) {
+		switch (rednet.get(Server.SERVER_PROTOCOL, null, RESOLVE_ID_RESPONSE, RESOLVE_ID, hint)) {
 			case Success(id):
 				options[ID] = id;
 				return Success(id);
-			case Failure(err): Failure(err);
+			case Failure(e):
+				return Failure(e);
 		}
 	}
 

@@ -18,7 +18,7 @@ class ConfigImpl {
 		data = load(config_file_name);
 	}
 
-	public function invalidate() {
+	public inline function invalidate() {
 		synced_with_disk = false;
 		OS.queueEvent(TAG_SAVE_INVALIDATED);
 	}
@@ -55,14 +55,16 @@ class ConfigImpl {
 	public inline function get<T>(key: Accessor<T>): Null<T>
 		return data[key];
 
-	public inline function set<T>(key: Accessor<T>, value: T) {
+	public inline function set<T>(key: Accessor<T>, value: T): T {
 		data[key] = value;
 		invalidate();
+		return value;
 	}
 
-	public function setDefault<T>(key: Accessor<T>, defaultValue: () -> T)
-		if (data[key] == null)
-			set(key, defaultValue());
+	public inline function setDefault<T>(key: Accessor<T>, defaultValue: () -> T): T {
+		final val = this.get(key);
+		return if (val != null) val else set(key, defaultValue());
+	}
 }
 
 @:forward
@@ -77,7 +79,7 @@ abstract Config(ConfigImpl) from ConfigImpl to ConfigImpl {
 		return this.get(key);
 
 	@:op([])
-	public inline function set<T>(key: Accessor<T>, value: T)
+	public inline function set<T>(key: Accessor<T>, value: T): T
 		return this.set(key, value);
 
 	public inline function save(?force: Bool = false) {

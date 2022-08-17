@@ -6,6 +6,7 @@ import argparse.Args;
 import argparse.ProgSpec;
 import cc.OS;
 import cc.Rednet;
+import config.Accessor;
 import config.Config;
 import events.EventEmitter;
 import events.CustomEvent.EVENT_SAVE_INVALIDATED;
@@ -13,13 +14,22 @@ import events.OSEvent.EVENT_REDNET_MESSAGE;
 import events.OSEvent.EVENT_TERMINATE;
 import events.OSEvent.RednetMessageEvent;
 import extype.Result;
+import extype.Tuple.Tuple2;
 import extype.Unit;
 import extype.Unit._;
 import logger.Logger;
+import rednetmgr.Header;
 import rednetmgr.RednetManager;
+import station.Station;
+import station.StationDeclaration;
+import station.StationStatus;
+import server.model.Station as StationModel;
 
 class Server {
 	public static inline final SERVER_PROTOCOL = "t4-server";
+	private static inline final KNOWN_STATIONS: Accessor<Map<Int, StationModel>> = "known-stations";
+
+	private static var stationStatuses: Array<StationStatus> = [];
 
 	private static var cliSpec: ProgSpec = {
 		name: "t4-server",
@@ -60,6 +70,8 @@ class Server {
 		}
 		rednet.host(SERVER_PROTOCOL, t4Args[Main.NETWORK]);
 
+		rednet.addResponse(SERVER_PROTOCOL, Station.RESOLVE_ID, (hdr, msg) -> resolveID(rednet, settings, hdr, msg));
+
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 
@@ -68,5 +80,39 @@ class Server {
 		rednet.close();
 
 		return Success(_);
+	}
+
+	private static function resolveID(rednet: RednetManager, settings: Config, hdr: Header, hint: StationDeclaration) {
+		var knownStations = settings.setDefault(KNOWN_STATIONS, () -> new Map());
+
+		final id = switch (hint.idSuggestion) {
+			case Some(suggestedId):
+				final model = knownStations[suggestedId];
+				if (model == null || model.hostId == hdr.src)
+					suggestedId;
+				else
+					freshStationId(knownStations);
+			case None:
+				freshStationId(knownStations);
+		}
+
+		final station: Dynamic = {
+			id: id,
+			hostId: hdr.src,
+			name: hint.name,
+		}
+		knownStations[id] = station;
+
+		rednet.sendDirect(hdr.protocol, hdr.src, Station.RESOLVE_ID_RESPONSE, id);
+
+		settings.invalidate();
+	}
+
+	private static function freshStationId(known: Map<Int, Dynamic>): Int {
+		while (true) {
+			final rand = Std.int(Math.random());
+			if (known[rand] == null)
+				return rand;
+		}
 	}
 }

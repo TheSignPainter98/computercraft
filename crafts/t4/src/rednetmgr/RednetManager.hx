@@ -12,10 +12,6 @@ import extype.Result;
 import extype.Unit;
 import extype.Unit._;
 
-typedef Protocol = String;
-typedef Host = String;
-typedef HostID = Int;
-
 @:structInit
 class HostedProtocol {
 	public final protocol: Protocol;
@@ -34,7 +30,7 @@ class RednetManager {
 
 	private static var modem: Null<String>;
 
-	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (Dynamic, HostID) -> Void>>;
+	private var responses: Map<Protocol, Map<MessageTag<Dynamic>, (Header, Dynamic) -> Void>>;
 	private var hostedProtocols: Array<HostedProtocol>;
 
 	public function new() {
@@ -76,7 +72,27 @@ class RednetManager {
 		return Success(_);
 	}
 
-	public function sendDirect<T>(recipient: Int, protocol: Protocol, tag: MessageTag<T>, msg: T): Result<Unit, String> {
+	public function get<S, T>(protocol: Protocol, host: Null<Host>, responseTag: MessageTag<S>, sendTag: MessageTag<T>, msg: T, ?maxRetryAttempts: Int): Result<S, String> {
+		switch (send(protocol, host, sendTag, msg)) {
+			case Failure(err):
+				return Failure(err);
+			default:
+		}
+
+		return receive(protocol, responseTag, maxRetryAttempts);
+	}
+
+	public function getDirect<S, T>(protocol: Protocol, recipient: HostID, responseTag: MessageTag<S>, sendTag: MessageTag<T>, msg: T, ?maxRetryAttempts: Int): Result<S, String> {
+		switch (sendDirect(protocol, recipient, sendTag, msg)) {
+			case Failure(err):
+				return Failure(err);
+			default:
+		}
+
+		return receive(protocol, responseTag, maxRetryAttempts);
+	}
+
+	public function sendDirect<T>(protocol: Protocol, recipient: Int, tag: MessageTag<T>, msg: T): Result<Unit, String> {
 		switch (rednetIsReady()) {
 			case Some(err):
 				return Failure(err);
@@ -102,7 +118,7 @@ class RednetManager {
 		if (hostID == null)
 			return Failure('No host found for protocol $protocol');
 
-		return sendDirect(hostID, protocol, tag, msg);
+		return sendDirect(protocol, hostID, tag, msg);
 	}
 
 	public function broadcast<T>(protocol: Protocol, tag: MessageTag<T>, msg: T): Result<Unit, String> {
@@ -146,7 +162,7 @@ class RednetManager {
 		}
 	}
 
-	public function addResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (T, HostID) -> Void) {
+	public function addResponse<T>(protocol: Protocol, tag: MessageTag<T>, listener: (Header, T) -> Void) {
 		if (responses[protocol] == null) {
 			responses[protocol] = new Map();
 		}
@@ -211,6 +227,11 @@ class RednetManager {
 		if (tagResponse == null)
 			return;
 
-		tagResponse(pkt.payload, senderID);
+		final header:Header = {
+			src: senderID,
+			protocol: protocol,
+		}
+
+		tagResponse(header, pkt.payload);
 	}
 }

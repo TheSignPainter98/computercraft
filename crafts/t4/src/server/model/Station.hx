@@ -1,8 +1,10 @@
-package model;
+package server.model;
+
+import rednetmgr.HostID;
 
 @:structInit
 class Station {
-	var id: Int;
-	var name: String;
-	var platforms: Array<Platform>;
+	public final id: Int;
+	public final hostId: HostID;
+	public final name: String;
 }
