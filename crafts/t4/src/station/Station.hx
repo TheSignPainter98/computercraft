@@ -105,8 +105,9 @@ class Station {
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 		emitter.addEventListener(EVENT_TIMER, (e) -> {
-			Logger.verbose('A timer completed');
-			if (e.get_id() == state.emissionTimer) {
+			final timer = e.get_id();
+			Logger.verbose('A timer completed, $timer');
+			if (timer == state.emissionTimer) {
 				Logger.log('Sending status to server ${args[Main.NETWORK]}');
 				rednet.send(SERVER_PROTOCOL, args[Main.NETWORK], STATION_STATUS_DECLARE, status());
 				state.emissionTimer = OS.startTimer(args[STATUS_EMISSION_PERIOD]);
