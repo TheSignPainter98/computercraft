@@ -72,7 +72,8 @@ class RednetManager {
 		return Success(_);
 	}
 
-	public function get<S, T>(protocol: Protocol, host: Null<Host>, responseTag: MessageTag<S>, sendTag: MessageTag<T>, msg: T, ?maxRetryAttempts: Int): Result<S, String> {
+	public function get<S, T>(protocol: Protocol, host: Null<Host>, responseTag: MessageTag<S>, sendTag: MessageTag<T>, msg: T,
+			?maxRetryAttempts: Int): Result<S, String> {
 		switch (send(protocol, host, sendTag, msg)) {
 			case Failure(err):
 				return Failure(err);
@@ -82,7 +83,8 @@ class RednetManager {
 		return receive(protocol, responseTag, maxRetryAttempts);
 	}
 
-	public function getDirect<S, T>(protocol: Protocol, recipient: HostID, responseTag: MessageTag<S>, sendTag: MessageTag<T>, msg: T, ?maxRetryAttempts: Int): Result<S, String> {
+	public function getDirect<S, T>(protocol: Protocol, recipient: HostID, responseTag: MessageTag<S>, sendTag: MessageTag<T>, msg: T,
+			?maxRetryAttempts: Int): Result<S, String> {
 		switch (sendDirect(protocol, recipient, sendTag, msg)) {
 			case Failure(err):
 				return Failure(err);
@@ -227,7 +229,7 @@ class RednetManager {
 		if (tagResponse == null)
 			return;
 
-		final header:Header = {
+		final header: Header = {
 			src: senderID,
 			protocol: protocol,
 		}
