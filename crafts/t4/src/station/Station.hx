@@ -71,15 +71,15 @@ class Station {
 	private static final stationHostname: String = 'station-#$id';
 	private static var name: Null<String>;
 
-	public static function main(t4Args: Args, settings: Config): Result<Unit, String> {
+	public static function main(args: Args, settings: Config): Result<Unit, String> {
 		Logger.log("I am a station");
 
-		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
+		final args = cliSpec.parse(args[Main.MACHINE_ARGS]).unite(args);
 		if (args == null)
 			return Failure("Failed to parse args");
 
 		final rednet = new RednetManager();
-		rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE]);
+		rednet.open(args[Main.MODEM], args[Main.DEBUG_MODE]);
 
 		switch (init(rednet, args, settings)) {
 			case Failure(err):
@@ -101,7 +101,7 @@ class Station {
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 		emitter.addEventListener(EVENT_TIMER, (e) -> {
 			if (e.get_id() == emissionTimer) {
-				rednet.send(SERVER_PROTOCOL, t4Args[Main.NETWORK], STATION_STATUS_DECLARE, status());
+				rednet.send(SERVER_PROTOCOL, args[Main.NETWORK], STATION_STATUS_DECLARE, status());
 				emissionTimer = OS.startTimer(args[STATUS_EMISSION_PERIOD]);
 			}
 		});

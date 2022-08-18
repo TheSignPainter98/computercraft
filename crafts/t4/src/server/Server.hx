@@ -110,10 +110,10 @@ class Server {
 		],
 	}
 
-	public static function main(t4Args: Args, settings: Config): Result<Unit, String> {
+	public static function main(args: Args, settings: Config): Result<Unit, String> {
 		Logger.log("I am a server.");
 
-		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
+		final args = cliSpec.parse(args[Main.MACHINE_ARGS]).unite(args);
 		if (args == null)
 			return Failure("Failed to parse args");
 
@@ -128,12 +128,12 @@ class Server {
 			trainStatuses: [],
 		};
 
-		switch (rednet.open(t4Args[Main.MODEM], t4Args[Main.DEBUG_MODE])) {
+		switch (rednet.open(args[Main.MODEM], args[Main.DEBUG_MODE])) {
 			case Failure(err):
 				return Failure(err);
 			default:
 		}
-		rednet.host(SERVER_PROTOCOL, t4Args[Main.NETWORK]);
+		rednet.host(SERVER_PROTOCOL, args[Main.NETWORK]);
 
 		rednet.addResponse(SERVER_PROTOCOL, PULSE_RESPONSE, (hdr, _) -> state.aliveStations.push(hdr.src));
 

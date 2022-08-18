@@ -58,8 +58,8 @@ class GPSHost {
 		],
 	}
 
-	public static function main(t4Args: Args, settings: Config): Result<Unit, String> {
-		final args = cliSpec.parse(t4Args[Main.MACHINE_ARGS]);
+	public static function main(args: Args, settings: Config): Result<Unit, String> {
+		final args = cliSpec.parse(args[Main.MACHINE_ARGS]).unite(args);
 		if (args == null)
 			return Failure("Failed to parse args");
 
