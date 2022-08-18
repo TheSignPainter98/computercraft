@@ -28,6 +28,11 @@ import extype.Result;
 import extype.Unit;
 import extype.Unit._;
 
+@:structInit
+private class State {
+	public var emissionTimer: Null<Int> = null;
+}
+
 class Station {
 	public static inline final STATION_PROTOCOL = "t4-station";
 	public static inline final PULSE: MessageTag<Unit> = "t4-station-pulse";
@@ -93,20 +98,22 @@ class Station {
 
 		Logger.log('This station is `$name.\'');
 
-		var emissionTimer = OS.startTimer(args[STATUS_EMISSION_PERIOD]);
+		final state: State = {};
 
 		var emitter = new EventEmitter();
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 		emitter.addEventListener(EVENT_TIMER, (e) -> {
-			Logger.verbose("A timer completed");
-			if (e.get_id() == emissionTimer) {
+			Logger.verbose('A timer completed');
+			if (e.get_id() == state.emissionTimer) {
 				Logger.log('Sending status to server ${args[Main.NETWORK]}');
 				rednet.send(SERVER_PROTOCOL, args[Main.NETWORK], STATION_STATUS_DECLARE, status());
-				emissionTimer = OS.startTimer(args[STATUS_EMISSION_PERIOD]);
+				state.emissionTimer = OS.startTimer(args[STATUS_EMISSION_PERIOD]);
 			}
 		});
+
+		state.emissionTimer = OS.startTimer(args[STATUS_EMISSION_PERIOD]);
 
 		emitter.listen();
 

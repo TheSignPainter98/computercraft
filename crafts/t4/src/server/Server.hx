@@ -48,8 +48,8 @@ class TrainStatus {
 
 @:structInit
 private class State {
-	public var emissionTimer: Int;
-	public var stationPulseTimer: Int;
+	public var emissionTimer: Null<Int> = null;
+	public var stationPulseTimer: Null<Int> = null;
 	public var stationStatuses: Array<StationStatus>;
 	public var aliveStations: Array<Int>;
 	public var trainStatuses: Map<String, TrainStatus>; // TODO(kcza): TrainID
@@ -121,8 +121,6 @@ class Server {
 		var rednet = new RednetManager();
 
 		final state: State = {
-			emissionTimer: OS.startTimer(args[EMISSION_PERIOD]),
-			stationPulseTimer: OS.startTimer(args[PULSE_PERIOD]),
 			stationStatuses: [],
 			aliveStations: [],
 			trainStatuses: [],
@@ -140,8 +138,8 @@ class Server {
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 		emitter.addEventListener(EVENT_TIMER, (e) -> {
-			Logger.verbose("A timer completed");
 			final timer = e.get_id();
+			Logger.verbose('A timer completed, $timer');
 			if (timer == state.emissionTimer) {
 				Logger.log('Broadcasting system status');
 				// broadcastSystemStatus(aggregateSystemStatus(state.trainStatuses, state.stationStatuses));
@@ -151,10 +149,11 @@ class Server {
 				// state.stationStatuses = purge(state.stationStatuses);
 				rednet.broadcast(STATION_PROTOCOL, STATION_PULSE, _);
 				state.stationPulseTimer = OS.startTimer(args[PULSE_PERIOD]);
-			} else {
-				Logger.log('Unknown timer: ${e.get_id()}?');
 			}
 		});
+
+		state.emissionTimer = OS.startTimer(args[EMISSION_PERIOD]);
+		state.stationPulseTimer = OS.startTimer(args[PULSE_PERIOD]);
 
 		emitter.listen();
 
