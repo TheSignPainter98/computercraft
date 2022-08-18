@@ -8,7 +8,7 @@ abstract AlarmEvent(Table<Int, Dynamic>) {
 	public var id(get, never): Int;
 
 	public inline function get_id(): Int {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -16,15 +16,15 @@ abstract CharEvent(Table<Int, Dynamic>) {
 	public var character(get, never): String;
 
 	public inline function get_character(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
 abstract ComputerCommandEvent(Table<Int, Dynamic>) {
-	public var arguments(get, never): Array<String>;
-
-	public inline function get_arguments(): Array<String> {
-		return this[1];
+	public function get_arguments(): Array<String> {
+		var arr = Table.toArray(this);
+		arr.shift();
+		return arr;
 	}
 }
 
@@ -32,7 +32,7 @@ abstract DiskEvent(Table<Int, Dynamic>) {
 	public var side(get, never): String;
 
 	public inline function get_side(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -40,7 +40,7 @@ abstract DiskEjectEvent(Table<Int, Dynamic>) {
 	public var side(get, never): String;
 
 	public inline function get_side(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -50,15 +50,15 @@ abstract HttpCheckEvent(Table<Int, Dynamic>) {
 	public var reason(get, never): Null<String>;
 
 	public inline function get_url(): String {
-		return this[1];
-	}
-
-	public inline function get_success(): Bool {
 		return this[2];
 	}
 
-	public inline function get_reason(): Null<String> {
+	public inline function get_success(): Bool {
 		return this[3];
+	}
+
+	public inline function get_reason(): Null<String> {
+		return this[4];
 	}
 }
 
@@ -68,15 +68,15 @@ abstract HttpFailureEvent(Table<Int, Dynamic>) {
 	public var response(get, never): Null<HTTPResponse>;
 
 	public inline function get_url(): String {
-		return this[1];
-	}
-
-	public inline function get_error(): String {
 		return this[2];
 	}
 
-	public inline function get_response(): Null<HTTPResponse> {
+	public inline function get_error(): String {
 		return this[3];
+	}
+
+	public inline function get_response(): Null<HTTPResponse> {
+		return this[4];
 	}
 }
 
@@ -85,11 +85,11 @@ abstract HttpSuccessEvent(Table<Int, Dynamic>) {
 	public var response(get, never): HTTPResponse;
 
 	public inline function get_url(): String {
-		return this[1];
+		return this[2];
 	}
 
 	public inline function get_response(): HTTPResponse {
-		return this[2];
+		return this[3];
 	}
 }
 
@@ -98,11 +98,11 @@ abstract KeyEvent(Table<Int, Dynamic>) {
 	public var hold(get, never): Bool;
 
 	public inline function get_key(): Int {
-		return this[1];
+		return this[2];
 	}
 
 	public inline function get_hold(): Bool {
-		return this[2];
+		return this[3];
 	}
 }
 
@@ -110,7 +110,7 @@ abstract KeyUpEvent(Table<Int, Dynamic>) {
 	public var key(get, never): Int;
 
 	public inline function get_key(): Int {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -122,23 +122,23 @@ abstract ModemMessageEvent(Table<Int, Dynamic>) {
 	public var distance(get, never): Float;
 
 	public inline function get_side(): String {
-		return this[1];
-	}
-
-	public inline function get_channel(): Int {
 		return this[2];
 	}
 
-	public inline function get_replyChannel(): Int {
+	public inline function get_channel(): Int {
 		return this[3];
 	}
 
-	public inline function get_message(): Dynamic {
+	public inline function get_replyChannel(): Int {
 		return this[4];
 	}
 
-	public inline function get_distance(): Float {
+	public inline function get_message(): Dynamic {
 		return this[5];
+	}
+
+	public inline function get_distance(): Float {
+		return this[6];
 	}
 }
 
@@ -146,7 +146,7 @@ abstract MonitorResizeEvent(Table<Int, Dynamic>) {
 	public var id(get, never): String;
 
 	public inline function get_id(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -156,15 +156,15 @@ abstract MonitorTouchEvent(Table<Int, Dynamic>) {
 	public var y(get, never): Int;
 
 	public inline function get_id(): String {
-		return this[1];
-	}
-
-	public inline function get_x(): Int {
 		return this[2];
 	}
 
-	public inline function get_y(): Int {
+	public inline function get_x(): Int {
 		return this[3];
+	}
+
+	public inline function get_y(): Int {
+		return this[4];
 	}
 }
 
@@ -174,15 +174,15 @@ abstract MouseClickEvent(Table<Int, Dynamic>) {
 	public var y(get, never): Int;
 
 	public inline function get_button(): Int {
-		return this[1];
-	}
-
-	public inline function get_x(): Int {
 		return this[2];
 	}
 
-	public inline function get_y(): Int {
+	public inline function get_x(): Int {
 		return this[3];
+	}
+
+	public inline function get_y(): Int {
+		return this[4];
 	}
 }
 
@@ -192,15 +192,15 @@ abstract MouseDragEvent(Table<Int, Dynamic>) {
 	public var y(get, never): Int;
 
 	public inline function get_button(): Int {
-		return this[1];
-	}
-
-	public inline function get_x(): Int {
 		return this[2];
 	}
 
-	public inline function get_y(): Int {
+	public inline function get_x(): Int {
 		return this[3];
+	}
+
+	public inline function get_y(): Int {
+		return this[4];
 	}
 }
 
@@ -210,15 +210,15 @@ abstract MouseScrollEvent(Table<Int, Dynamic>) {
 	public var y(get, never): Int;
 
 	public inline function get_direction(): Int {
-		return this[1];
-	}
-
-	public inline function get_x(): Int {
 		return this[2];
 	}
 
-	public inline function get_y(): Int {
+	public inline function get_x(): Int {
 		return this[3];
+	}
+
+	public inline function get_y(): Int {
+		return this[4];
 	}
 }
 
@@ -228,15 +228,15 @@ abstract MouseUpEvent(Table<Int, Dynamic>) {
 	public var y(get, never): Int;
 
 	public inline function get_button(): Int {
-		return this[1];
-	}
-
-	public inline function get_x(): Int {
 		return this[2];
 	}
 
-	public inline function get_y(): Int {
+	public inline function get_x(): Int {
 		return this[3];
+	}
+
+	public inline function get_y(): Int {
+		return this[4];
 	}
 }
 
@@ -244,7 +244,7 @@ abstract PasteEvent(Table<Int, Dynamic>) {
 	public var text(get, never): String;
 
 	public inline function get_text(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -252,7 +252,7 @@ abstract PeripheralEvent(Table<Int, Dynamic>) {
 	public var side(get, never): String;
 
 	public inline function get_side(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -260,7 +260,7 @@ abstract PeripheralDetachEvent(Table<Int, Dynamic>) {
 	public var side(get, never): String;
 
 	public inline function get_side(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -270,15 +270,15 @@ abstract RednetMessageEvent(Table<Int, Dynamic>) {
 	public var protocol(get, never): Null<String>;
 
 	public inline function get_id(): Int {
-		return this[1];
-	}
-
-	public inline function get_message(): Dynamic {
 		return this[2];
 	}
 
-	public inline function get_protocol(): Null<String> {
+	public inline function get_message(): Dynamic {
 		return this[3];
+	}
+
+	public inline function get_protocol(): Null<String> {
+		return this[4];
 	}
 }
 
@@ -288,7 +288,7 @@ abstract SpeakerAudioEmptyEvent(Table<Int, Dynamic>) {
 	public var id(get, never): String;
 
 	public inline function get_id(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -298,15 +298,15 @@ abstract TaskCompleteEvent(Table<Int, Dynamic>) {
 	public var error(get, never): Null<String>;
 
 	public inline function get_id(): Int {
-		return this[1];
-	}
-
-	public inline function get_success(): Bool {
 		return this[2];
 	}
 
-	public inline function get_error(): Null<String> {
+	public inline function get_success(): Bool {
 		return this[3];
+	}
+
+	public inline function get_error(): Null<String> {
+		return this[4];
 	}
 }
 
@@ -317,7 +317,7 @@ abstract TimerEvent(Table<Int, Dynamic>) {
 	public var id(get, never): Int;
 
 	public inline function get_id(): Int {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -327,7 +327,7 @@ abstract WebsocketClosedEvent(Table<Int, Dynamic>) {
 	public var url(get, never): String;
 
 	public inline function get_url(): String {
-		return this[1];
+		return this[2];
 	}
 }
 
@@ -336,11 +336,11 @@ abstract WebsocketFailureEvent(Table<Int, Dynamic>) {
 	public var error(get, never): String;
 
 	public inline function get_url(): String {
-		return this[1];
+		return this[2];
 	}
 
 	public inline function get_error(): String {
-		return this[2];
+		return this[3];
 	}
 }
 
@@ -350,15 +350,15 @@ abstract WebsocketMessageEvent(Table<Int, Dynamic>) {
 	public var binary(get, never): Bool;
 
 	public inline function get_url(): String {
-		return this[1];
-	}
-
-	public inline function get_body(): String {
 		return this[2];
 	}
 
-	public inline function get_binary(): Bool {
+	public inline function get_body(): String {
 		return this[3];
+	}
+
+	public inline function get_binary(): Bool {
+		return this[4];
 	}
 }
 
@@ -367,11 +367,11 @@ abstract WebsocketSuccessEvent(Table<Int, Dynamic>) {
 	public var handle(get, never): Websocket;
 
 	public inline function get_url(): String {
-		return this[1];
+		return this[2];
 	}
 
 	public inline function get_handle(): Websocket {
-		return this[2];
+		return this[3];
 	}
 }
 
