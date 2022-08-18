@@ -140,6 +140,7 @@ class Server {
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
 		emitter.addEventListener(EVENT_TIMER, (e) -> {
+			Logger.verbose("A timer completed");
 			final timer = e.get_id();
 			if (timer == state.emissionTimer) {
 				Logger.log('Broadcasting system status');
