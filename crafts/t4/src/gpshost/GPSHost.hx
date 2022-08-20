@@ -63,7 +63,7 @@ class GPSHost {
 		if (args == null)
 			return Failure("Failed to parse args");
 
-		final position = args[POSITION];
+		final position: Position = args[POSITION];
 
 		Shell.run('gps', 'host', position.x, position.y, position.z);
 
