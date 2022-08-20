@@ -8,6 +8,8 @@ import cc.OS;
 import cc.Rednet;
 import config.Accessor;
 import config.Config;
+import display.Display.DISPLAY_PROTOCOL;
+import display.Display.NETWORK_STATUS;
 import events.EventEmitter;
 import events.CustomEvent.EVENT_SAVE_INVALIDATED;
 import events.OSEvent.EVENT_REDNET_MESSAGE;
@@ -15,6 +17,7 @@ import events.OSEvent.EVENT_TERMINATE;
 import events.OSEvent.RednetMessageEvent;
 import events.OSEvent.EVENT_TIMER;
 import extype.Result;
+import extype.Set;
 import extype.Tuple.Tuple2;
 import extype.Unit;
 import extype.Unit._;
@@ -47,12 +50,33 @@ class TrainStatus {
 }
 
 @:structInit
+class NetworkStatus {
+	public final trains: Map<String, TrainStatus>;
+	public final stations: Array<StationStatus>;
+	public final routes: Array<Array<Int>>; // TODO: StationID
+
+	public function new(trains: Map<String, TrainStatus>, stations: Array<StationStatus>) {
+		this.trains = trains;
+		this.stations = stations;
+		this.routes = [ for (train in trains) computeRoute(train, stations) ];
+	}
+
+	private function computeRoute(trains: TrainStatus, stations: Array<StationStatus>): Array<Int> {
+		return [ ]; // TODO(kcza): complete me!
+	}
+}
+
+@:structInit
 private class State {
 	public var emissionTimer: Null<Int> = null;
 	public var stationPulseTimer: Null<Int> = null;
 	public var stationStatuses: Array<StationStatus>;
-	public var aliveStations: Array<Int>;
+	public var aliveStations: Set<Int>;
 	public var trainStatuses: Map<String, TrainStatus>; // TODO(kcza): TrainID
+
+	public function purge() {
+		stationStatuses = stationStatuses.filter((s) -> aliveStations.exists(s.id));
+	}
 }
 
 class Server {
@@ -122,7 +146,7 @@ class Server {
 
 		final state: State = {
 			stationStatuses: [],
-			aliveStations: [],
+			aliveStations: new Set(),
 			trainStatuses: [],
 		};
 
@@ -133,7 +157,7 @@ class Server {
 		}
 		rednet.host(SERVER_PROTOCOL, args[Main.NETWORK]);
 
-		rednet.addResponse(SERVER_PROTOCOL, PULSE_RESPONSE, (hdr, _) -> state.aliveStations.push(hdr.src));
+		rednet.addResponse(SERVER_PROTOCOL, PULSE_RESPONSE, (hdr, _) -> state.aliveStations.add(hdr.src));
 
 		emitter.addEventListener(EVENT_SAVE_INVALIDATED, (_) -> settings.save());
 		emitter.addEventListener(EVENT_REDNET_MESSAGE, rednet.onRednetMessageEvent);
@@ -142,12 +166,19 @@ class Server {
 			Logger.verbose('A timer completed, $timer');
 			if (timer == state.emissionTimer) {
 				Logger.log('Broadcasting system status');
-				// broadcastSystemStatus(aggregateSystemStatus(state.trainStatuses, state.stationStatuses));
+				rednet.broadcast(DISPLAY_PROTOCOL, NETWORK_STATUS, aggregateNetworkStatus(state.trainStatuses, state.stationStatuses));
+
+				// Reset timer
 				state.emissionTimer = OS.startTimer(args[EMISSION_PERIOD]);
 			} else if (timer == state.stationPulseTimer) {
 				Logger.log('Checking station pulse');
-				// state.stationStatuses = purge(state.stationStatuses);
+
+				// Purge unresponsive stations from last check
+				state.purge();
+
 				rednet.broadcast(STATION_PROTOCOL, STATION_PULSE, _);
+
+				// Reset timer
 				state.stationPulseTimer = OS.startTimer(args[PULSE_PERIOD]);
 			}
 		});
@@ -160,5 +191,12 @@ class Server {
 		rednet.close();
 
 		return Success(_);
+	}
+
+	private static function aggregateNetworkStatus(trainStatuses: Map<String, TrainStatus>, stationStatuses: Array<StationStatus>): NetworkStatus {
+		return {
+			trains: trainStatuses,
+			stations: stationStatuses,
+		}
 	}
 }
