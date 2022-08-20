@@ -20,13 +20,15 @@ import logger.Logger;
 
 class Display {
 	public static inline final DISPLAY_PROTOCOL = "t4-display";
-	public static inline final NETWORK_STATUS: MessageTag<NetworkStatus> = "t4-display/network-status";
+	public static inline final NETWORK_STATUS: MessageTag<NetworkStatus> = "network-status";
 
 	public static function main(args: Args, settings: Config): Result<Unit, String> {
 		Logger.log("I am a display.");
 
 		var emitter = new EventEmitter();
 		var rednet = new RednetManager();
+
+		rednet.open(args[Main.MODEM], args[Main.DEBUG_MODE]);
 
 		rednet.host(DISPLAY_PROTOCOL, displayHostName(OS.getComputerID()));
 
