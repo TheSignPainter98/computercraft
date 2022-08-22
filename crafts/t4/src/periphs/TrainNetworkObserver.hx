@@ -17,6 +17,13 @@ extern class BlockPosition {
 
 // Trains
 
+/**
+	Minecraft's Standard Text Component format
+**/
+interface TextComponent {
+	public var text: String;
+}
+
 interface ScheduleItem {
 	public var data: {Text: String};
 	public var type: String;
@@ -43,7 +50,7 @@ extern class TrainStop {
 
 interface ExpectedTrain {
 	public var destination: String;
-	public var scheduleName: {text: String};
+	public var scheduleName: TextComponent;
 
 	/**
 		Expected number of ticks until arriving at destination. Updates infrequently.
@@ -105,12 +112,14 @@ interface GraphNode {
 
 extern class TrainNetworkObserver {
 	public function getTrains(): Table<Int, TrainId>;
+	public function getTrainName(): Null<TextComponent>;
 	// Hacky EitherType when it's actually both
 	public function getTrainSchedule(train: TrainId): Null<Table<Int, EitherType<Table<Int, ScheduleDetail>, ScheduleItem>>>;
 	public function getTrainWorldPosition(train: TrainId): Null<TrainLocation>;
 	public function getTrainSpeed(train: TrainId): Null<Float>;
 	public function getTrainStopped(train: TrainId): Null<TrainStop>;
 	public function getStops(): Table<Int, StopId>;
+	public function getStop(): Null<String>;
 	public function getStopWorldPosition(stop: StopId): Null<BlockPosition>;
 	public function getStopExpectedTrain(stop: StopId): Null<Table<Int, ExpectedTrain>>;
 	public function getSignals(): Table<Int, SignalId>;
